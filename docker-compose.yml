@@ -5,21 +5,28 @@ services:
             context: ./app
             dockerfile: Dockerfile
         container_name: app
+        env_file:
+            - ./app/.env
         environment:
             - DOCKER_BUILDKIT=1
         networks:
             - mqtt_network
 
     mosquitto:
-        image: eclipse-mosquitto:openssl
+        build:
+            context: ./mosquitto
+            dockerfile: Dockerfile
+        container_name: mqtt_server
+        env_file:
+            - ./mosquitto/.env
         ports:
             - "1883:1883"
         volumes:
-            - mosquitto_config:/mosquitto/config
             - mosquitto_data:/mosquitto/data
             - mosquitto_log:/mosquitto/log
         networks:
             - mqtt_network
+        restart: unless-stopped
 
     prometheus:
         image: bitnami/prometheus:latest
@@ -50,6 +57,5 @@ networks:
 volumes:
     mosquitto_data:
     mosquitto_log:
-    mosquitto_config:
     prometheus_data:
     grafana_data:

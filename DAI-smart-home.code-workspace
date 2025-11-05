@@ -6,7 +6,8 @@
 	],
     "settings": {
         "conventionalCommits.scopes": [
-            "docker"
-        ]
+			"docker",
+			"app"
+		]
     }
 }

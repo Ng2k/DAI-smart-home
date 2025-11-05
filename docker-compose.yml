@@ -1,0 +1,55 @@
+services:
+
+    app:
+        build:
+            context: ./app
+            dockerfile: Dockerfile
+        container_name: app
+        environment:
+            - DOCKER_BUILDKIT=1
+        networks:
+            - mqtt_network
+
+    mosquitto:
+        image: eclipse-mosquitto:openssl
+        ports:
+            - "1883:1883"
+        volumes:
+            - mosquitto_config:/mosquitto/config
+            - mosquitto_data:/mosquitto/data
+            - mosquitto_log:/mosquitto/log
+        networks:
+            - mqtt_network
+
+    prometheus:
+        image: bitnami/prometheus:latest
+        ports:
+            - "9090:9090"
+        volumes:
+            - prometheus_data:/opt/bitnami/prometheus/data
+            - ./prometheus.yml:/opt/bitnami/prometheus/prometheus.yml:ro
+        networks:
+            - mqtt_network
+
+    grafana-ui:
+        image: grafana/grafana:latest
+        container_name: grafana-ui
+        ports:
+            - "3000:3000"
+        volumes:
+            - grafana_data:/var/lib/grafana
+            - ./monitoring/dev/grafana/provisioning:/etc/grafana/provisioning:ro
+        networks:
+            - monitoring_network
+
+
+networks:
+    mqtt_network:
+    monitoring_network:
+
+volumes:
+    mosquitto_data:
+    mosquitto_log:
+    mosquitto_config:
+    prometheus_data:
+    grafana_data:

@@ -1,6 +1,24 @@
-import mqtt from "mqtt";
-import { logger } from "./utils";
+import logger from "./utils/logger";
+import { RegistryAgent, RoomAgent, type MQTTConfig } from "./agents";
 
-import { AgentClass, AgentType, BaseAgent } from "./agents";
+async function main() {
+	if (!Bun.env.MQTT_BROKER_URL) {
+		const error = new Error('MQTT_BROKER_URL is not set');
+		logger.error({ error }, error.message);
+		return;
+	}
 
-const agent = new BaseAgent("test-agent", AgentType.SENSOR, AgentClass.TEMPERATURE);
+	const mqttConfigs: MQTTConfig = {
+		brokerUrl: Bun.env.MQTT_BROKER_URL || '',
+		username: Bun.env.MQTT_USERNAME || '',
+		password: Bun.env.MQTT_PASSWORD || '',
+	};
+
+	const registry = new RegistryAgent("registry", mqttConfigs);
+	const room1 = new RoomAgent("living-room", mqttConfigs);
+
+	await registry.initialize();
+	await room1.initialize();
+}
+
+main();

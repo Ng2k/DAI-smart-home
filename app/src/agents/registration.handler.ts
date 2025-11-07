@@ -23,9 +23,9 @@ export class RegistrationHandler {
 
 	public async handleAck(
 		message: string,
-	): Promise<void> {
-		const { success } = JSON.parse(message);
-		if (success) return;
+	): Promise<Record<string, any>> {
+		const { success, agent } = JSON.parse(message);
+		if (success) return agent;
 		throw new Error("Registration failed");
 	}
 }

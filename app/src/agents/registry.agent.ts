@@ -4,13 +4,11 @@
  * @author
  */
 import { Agent } from "./agent.class";
-import type { IAgent } from "./agent.interface";
-import { RoomAgent } from "./room.agent";
 import config from "../../config/agents.json";
 import type { MQTTConfig } from "./types";
 
 export class RegistryAgent extends Agent {
-	private readonly agents: Map<string, IAgent> = new Map();
+	private readonly agents: Map<string, Record<string, any>> = new Map();
 
 	constructor(name: string, configs: MQTTConfig) {
 		super(name, __filename, configs);
@@ -49,12 +47,12 @@ export class RegistryAgent extends Agent {
 					return;
 				}
 				const agent = config.agents[name as keyof typeof config.agents];
-				this.agents.set(id, new RoomAgent(name, this.mqttConfigs));
+				this.agents.set(id, agent);
 				this.childLogger.debug({ agent }, "Agent found in config, creating instance");
 
 				this.mqttClient.publishAsync(
 					this.ackRegistrationTopic,
-					JSON.stringify({ success: true }),
+					JSON.stringify({ success: true, agent }),
 					{ qos: 1 }
 				);
 			} catch (error) {

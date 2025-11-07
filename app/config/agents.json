@@ -1,26 +1,32 @@
 {
 	"agents": {
-		"livin-room": {
+		"living-room": {
 			"type": "room",
 			"sensors": [
 				{
 					"type": "sensor",
-					"class": "temperature",
+					"name": "temperature",
+					"uom": "°C",
 					"publish_interval_s": 2,
 					"topic": "home/room/living/sensor/temperature"
 				}
-			]
+			],
+			"actuators": [],
+			"controllers": []
 		},
 		"bedroom": {
 			"type": "room",
 			"sensors": [
 				{
 					"type": "sensor",
-					"class": "temperature",
+					"name": "temperature",
+					"uom": "°C",
 					"publish_interval_s": 2,
 					"topic": "home/room/bedroom/sensor/temperature"
 				}
-			]
+			],
+			"actuators": [],
+			"controllers": []
 		}
 	}
 }

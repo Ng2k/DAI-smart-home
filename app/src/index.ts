@@ -19,6 +19,8 @@ async function main() {
 
 	await registry.initialize();
 	await livingRoom.initialize();
+
+	livingRoom.start();
 }
 
 main();

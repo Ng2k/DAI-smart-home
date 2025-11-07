@@ -11,6 +11,7 @@ import type { IAgent } from "./agent.interface";
 import type { Logger } from "pino";
 import type { MQTTConfig } from "./types";
 import path from "path";
+import type { Sensor } from "../components";
 
 export class Agent implements IAgent {
 	public readonly id: string = crypto.randomUUID();
@@ -22,9 +23,14 @@ export class Agent implements IAgent {
 	protected mqttClient: mqtt.MqttClient;
 	protected _isConnected: boolean = false;
 	protected _isRegistered: boolean = false;
+	protected _sensors: Sensor[] = [];
+	protected _actuators: [] = [];
+	protected _controllers: [] = [];
+	protected _type: string = "";
 
 	private _maxRetryAttempts: number = 3;
 	private _currentRetryAttempts: number = 0;
+
 
 	constructor(
 		public readonly name: string,

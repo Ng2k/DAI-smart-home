@@ -4,7 +4,7 @@
  * @author Nicola Guerra
  */
 
-import type { ComponentType, UnitOfMeasurement } from "./enums";
+import type { ComponentType } from "./enums";
 
 /**
  * This interface defines the common properties for all components.
@@ -12,10 +12,7 @@ import type { ComponentType, UnitOfMeasurement } from "./enums";
  */
 export interface IComponent {
 	readonly id: string;
-	readonly name: string;
 	readonly type: ComponentType;
-	readonly uom: UnitOfMeasurement;
-	readonly topics: string[];
 
 	/**
 	 * @brief Convert the component to a JSON object

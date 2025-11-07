@@ -1,2 +1,4 @@
-export { default as logger } from "./logger";
-export { RegistrationHandler } from "../agents/registration.handler";
+export { default as logger, type Logger } from "./logger";
+export * from "./types";
+export * from "./enums";
+export * from "./types";

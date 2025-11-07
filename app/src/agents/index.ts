@@ -1,5 +1,2 @@
-export * from './agent.interface';
-export * from './agent.class';
-export * from './registry.agent';
-export * from './room.agent';
-export * from './types';
+export { RoomAgent } from './room.class';
+export { RegistryAgent } from './registry.class';

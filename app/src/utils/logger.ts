@@ -1,4 +1,4 @@
-import pino, { transport } from 'pino';
+import pino from 'pino';
 import type { Logger } from 'pino';
 
 const logger_options_dev = {

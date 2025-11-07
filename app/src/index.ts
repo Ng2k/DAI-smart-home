@@ -1,5 +1,6 @@
-import logger from "./utils/logger";
-import { RegistryAgent, RoomAgent, type MQTTConfig } from "./agents";
+import { AgentType } from "./utils";
+import { logger, type MQTTConfig } from "./utils";
+import { RoomAgent, RegistryAgent } from "./agents";
 
 async function main() {
 	if (!Bun.env.MQTT_BROKER_URL) {
@@ -14,13 +15,19 @@ async function main() {
 		password: Bun.env.MQTT_PASSWORD || '',
 	};
 
-	const registry = new RegistryAgent("registry", mqttConfigs);
-	const livingRoom = new RoomAgent("living-room", mqttConfigs);
-
-	await registry.initialize();
-	await livingRoom.initialize();
-
-	livingRoom.start();
+	const registry = new RegistryAgent(
+		AgentType.REGISTRY,
+		mqttConfigs,
+		[`${Bun.env.MQTT_REGISTRY}/agents`]
+	);
+	setTimeout(() => {
+		const room = new RoomAgent(
+			"Living Room",
+			AgentType.ROOM,
+			mqttConfigs,
+			[]
+		);
+	}, 5000);
 }
 
 main();

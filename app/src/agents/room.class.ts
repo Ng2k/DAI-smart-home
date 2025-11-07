@@ -7,7 +7,7 @@ import { basename } from "path"
 
 import type { AgentType } from "../utils/enums";
 import { Agent } from "./agent.abstract";
-import { logger, type MQTTConfig } from "../utils";
+import { logger, Topic, type MQTTConfig } from "../utils";
 
 /**
  * @brief Room agent class
@@ -15,6 +15,9 @@ import { logger, type MQTTConfig } from "../utils";
  */
 export class RoomAgent extends Agent {
 	private _isRegistered: boolean = false;
+	protected override readonly  _topicToFunctionMap: Record<string, (message: string) => void> = {
+		[Topic.REGISTRY_AGENTS_ACK]: this._handleRegistrationAck.bind(this),
+	};
 
 	/*
 	private sensorManager: SensorManager;
@@ -22,16 +25,15 @@ export class RoomAgent extends Agent {
 	private controllerManager: ControllerManager;
 	*/
 
-	constructor(name: string, type: AgentType, mqttConfigs: MQTTConfig, topics: string[]) {
+	constructor(name: string, type: AgentType, mqttConfigs: MQTTConfig) {
 		const _logger = logger.child({
 			name: basename(__filename),
 			agent_name: name
 		});
-		super(name, type, mqttConfigs, topics, _logger);
-
+		super(name, type, mqttConfigs, _logger);
+		this._subscribeToTopics(Object.keys(this._topicToFunctionMap) as Topic[]);
 		this._registerAgent();
-
-		/* this.sensorManager = new SensorManager();
+		/*
 		this.actuatorManager = new ActuatorManager();
 		this.controllerManager = new ControllerManager(); */
 
@@ -51,13 +53,6 @@ export class RoomAgent extends Agent {
 		return `${this.id} - ${this.name} - ${this.type}`;
 	}
 
-	// protected methods------------------------------------------------------------------------------
-	protected override _startMessageListener(): void {
-		this._mqttClient.on('message', (topic, message) => {
-			this._logger.debug({ topic, message }, 'Message received');
-		});
-	}
-
 	// private methods------------------------------------------------------------------------------
 	/**
 	 * @brief Register the agent
@@ -71,7 +66,29 @@ export class RoomAgent extends Agent {
 		}
 
 		const payload = JSON.stringify(this.toJSON());
-		this._mqttClient.publish(`${Bun.env.MQTT_REGISTRY}/agents`, payload);
-		this._logger.debug({ payload }, 'Requesting registration');
+		this._mqttClient.publish(Topic.REGISTRY_AGENTS, payload);
+		this._logger.debug({ payload, topic: Topic.REGISTRY_AGENTS }, 'Requesting registration');
+	}
+	/**
+	 * @brief Handle the registration acknowledgment
+	 * @details This method handles the registration acknowledgment
+	 * @param message The message to handle
+	 * @returns void
+	 */
+	private _handleRegistrationAck(message: string): void {
+		const { success, id }: Record<string, boolean | string> = JSON.parse(message);
+		if (id !== this.id) {
+			this._logger.warn(
+				{ message },
+				'Registration acknowledgment received for a different agent. Check subscriptions for this agent'
+			);
+			return;
+		}
+		if (!success || !id) {
+			this._logger.error({ message }, 'Registration failed');
+			return;
+		}
+		this._logger.info({ message }, 'Registration acknowledged by the registry');
+		this._isRegistered = true;
 	}
 }

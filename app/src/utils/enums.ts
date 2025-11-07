@@ -9,9 +9,9 @@
  * @enum AgentType
  */
 export enum AgentType {
-	ROOM = "room",
-	REGISTRY = "registry",
-	CONTROLLER = "controller",
+	ROOM = "Room",
+	REGISTRY = "Registry",
+	CONTROLLER = "Controller",
 }
 
 /**
@@ -28,4 +28,13 @@ export enum SensorType {
  */
 export enum ActuatorType {
 	Heater = "heater"
+}
+
+/**
+ * @brief Topics
+ * @enum Topics
+ */
+export enum Topic {
+	REGISTRY_AGENTS = "/home/registry/agents",
+	REGISTRY_AGENTS_ACK = "/home/registry/agents/ack",
 }

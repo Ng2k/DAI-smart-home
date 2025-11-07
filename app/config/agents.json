@@ -1,28 +1,39 @@
 {
 	"agents": {
-		"living-room": {
-			"type": "room",
+		"registry": {
+			"type": "Registry",
 			"sensors": [
 				{
 					"type": "sensor",
 					"name": "temperature",
 					"uom": "°C",
-					"publish_interval_s": 2,
-					"topic": "home/room/living/sensor/temperature"
+					"publish_interval_s": 2
+				}
+			],
+			"actuators": [],
+			"controllers": []
+		},
+		"living-room": {
+			"type": "Room",
+			"sensors": [
+				{
+					"type": "sensor",
+					"name": "temperature",
+					"uom": "°C",
+					"publish_interval_s": 2
 				}
 			],
 			"actuators": [],
 			"controllers": []
 		},
 		"bedroom": {
-			"type": "room",
+			"type": "Room",
 			"sensors": [
 				{
 					"type": "sensor",
 					"name": "temperature",
 					"uom": "°C",
-					"publish_interval_s": 2,
-					"topic": "home/room/bedroom/sensor/temperature"
+					"publish_interval_s": 2
 				}
 			],
 			"actuators": [],

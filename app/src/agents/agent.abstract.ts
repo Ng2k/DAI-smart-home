@@ -5,8 +5,7 @@
  */
 import mqtt, { type MqttClient } from "mqtt";
 
-import type { AgentType } from "../utils/enums";
-import type { Logger, MQTTConfig } from "../utils";
+import { type Logger, type MQTTConfig, AgentType, Topic } from "../utils";
 import type { IAgent } from "./agent.interface";
 
 /**
@@ -15,12 +14,12 @@ import type { IAgent } from "./agent.interface";
  */
 export abstract class Agent implements IAgent {
 	protected _mqttClient: MqttClient;
+	protected abstract readonly _topicToFunctionMap: Record<string, (message: string) => void>;
 
 	constructor(
 		public readonly name: string,
 		public readonly type: AgentType,
 		public readonly mqttConfigs: MQTTConfig,
-		protected readonly _topics: string[],
 		protected readonly _logger: Logger,
 		public readonly id: string = crypto.randomUUID().toString(),
 	) {
@@ -31,7 +30,6 @@ export abstract class Agent implements IAgent {
 
 		this._startErrorListener();
 		this._startMessageListener();
-		this._subscribeToTopics();
 	}
 
 	// public methods ------------------------------------------------------------------------------
@@ -40,11 +38,16 @@ export abstract class Agent implements IAgent {
 
 	// protected methods ---------------------------------------------------------------------------
 	/**
-	 * @brief Start the message listener
-	 * @details This method starts the message listener for the MQTT client
+	 * @brief Subscribe to topics
+	 * @details This method subscribes to the topics for the agent
 	 * @returns void
 	 */
-	protected abstract _startMessageListener(): void;
+	protected _subscribeToTopics(topics: Topic[]): void {
+		topics.forEach((topic: Topic) => {
+			this._mqttClient.subscribe(topic);
+			this._logger.debug({ topic }, 'Subscribed to topic');
+		});
+	}
 
 	// private methods -----------------------------------------------------------------------------
 	/**
@@ -58,14 +61,20 @@ export abstract class Agent implements IAgent {
 		});
 	}
 	/**
-	 * @brief Subscribe to topics
-	 * @details This method subscribes to the topics for the agent
+	 * @brief Start the message listener
+	 * @details This method starts the message listener for the MQTT client
 	 * @returns void
 	 */
-	private _subscribeToTopics(): void {
-		this._topics.forEach((topic: string) => {
-			this._mqttClient.subscribe(topic);
-			this._logger.debug({ topic }, 'Subscribed to topic');
+	private _startMessageListener(): void {
+		this._mqttClient.on('message', (topic, message) => {
+			const payload = message.toString();
+			this._logger.debug({ topic, message: JSON.parse(payload) }, 'Message received');
+
+			const functionToCall = this._topicToFunctionMap[topic as Topic];
+			if (!functionToCall) return;
+
+			functionToCall(payload);
+			this._logger.info({ payload }, 'Operation for the topic completed successfully');
 		});
 	}
 }

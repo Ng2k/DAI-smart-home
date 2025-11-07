@@ -1,5 +1,4 @@
-import { AgentType } from "./utils";
-import { logger, type MQTTConfig } from "./utils";
+import { logger, type MQTTConfig, AgentType, Topic } from "./utils";
 import { RoomAgent, RegistryAgent } from "./agents";
 
 async function main() {
@@ -15,18 +14,9 @@ async function main() {
 		password: Bun.env.MQTT_PASSWORD || '',
 	};
 
-	const registry = new RegistryAgent(
-		AgentType.REGISTRY,
-		mqttConfigs,
-		[`${Bun.env.MQTT_REGISTRY}/agents`]
-	);
+	const registry = new RegistryAgent(AgentType.REGISTRY, mqttConfigs);
 	setTimeout(() => {
-		const room = new RoomAgent(
-			"Living Room",
-			AgentType.ROOM,
-			mqttConfigs,
-			[]
-		);
+		const room = new RoomAgent("Living Room", AgentType.ROOM, mqttConfigs);
 	}, 5000);
 }
 

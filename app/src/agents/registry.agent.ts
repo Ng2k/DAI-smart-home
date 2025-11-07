@@ -25,9 +25,15 @@ export class RegistryAgent extends Agent {
 
 		try {
 			await this.mqttClient.subscribeAsync(this.registrationTopic, { qos: 1 });
-			this.childLogger.info({ topic: this.registrationTopic }, "Subscribed to registration topic");
+			this.childLogger.info(
+				{ topic: this.registrationTopic },
+				"Subscribed to registration topic"
+			);
 		} catch (error) {
-			this.childLogger.error({ error }, "Error subscribing to registration topic");
+			this.childLogger.error(
+				{ error },
+				(error instanceof Error) ? error.message : "Unknown error"
+			);
 			return;
 		}
 
@@ -57,7 +63,10 @@ export class RegistryAgent extends Agent {
 					JSON.stringify({ success: false }),
 					{ qos: 1 }
 				);
-				this.childLogger.error({ error }, "Error handling registration process");
+				this.childLogger.error(
+					{ error },
+					(error instanceof Error) ? error.message : "Unknown error"
+				);
 			}
 		});
 

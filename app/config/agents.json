@@ -1,13 +1,13 @@
 {
 	"agents": {
-		"living-room": {
+		"livin-room": {
 			"type": "room",
 			"sensors": [
 				{
 					"type": "sensor",
 					"class": "temperature",
 					"publish_interval_s": 2,
-					"topic": "living-room/temperature"
+					"topic": "home/room/living/sensor/temperature"
 				}
 			]
 		},
@@ -18,7 +18,7 @@
 					"type": "sensor",
 					"class": "temperature",
 					"publish_interval_s": 2,
-					"topic": "bedroom/temperature"
+					"topic": "home/room/bedroom/sensor/temperature"
 				}
 			]
 		}

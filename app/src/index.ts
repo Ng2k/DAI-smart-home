@@ -15,10 +15,10 @@ async function main() {
 	};
 
 	const registry = new RegistryAgent("registry", mqttConfigs);
-	const room1 = new RoomAgent("living-room", mqttConfigs);
+	const livingRoom = new RoomAgent("living-room", mqttConfigs);
 
 	await registry.initialize();
-	await room1.initialize();
+	await livingRoom.initialize();
 }
 
 main();

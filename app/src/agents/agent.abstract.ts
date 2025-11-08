@@ -5,7 +5,8 @@
  */
 import mqtt, { type MqttClient } from "mqtt";
 
-import { type Logger, type MQTTConfig, AgentType, Topic } from "../utils";
+import { AgentType } from "../utils";
+import type { Logger, T_MqttConfig} from "../utils"
 import type { IAgent } from "./agent.interface";
 
 /**
@@ -19,11 +20,11 @@ export abstract class Agent implements IAgent {
 	constructor(
 		public readonly name: string,
 		public readonly type: AgentType,
-		public readonly mqttConfigs: MQTTConfig,
+		public readonly mqttConfigs: T_MqttConfig,
 		protected readonly _logger: Logger,
 		public readonly id: string = crypto.randomUUID().toString(),
 	) {
-		this._mqttClient = mqtt.connect(mqttConfigs.brokerUrl, {
+		this._mqttClient = mqtt.connect(mqttConfigs.url, {
 			username: mqttConfigs.username,
 			password: mqttConfigs.password
 		});
@@ -42,8 +43,8 @@ export abstract class Agent implements IAgent {
 	 * @details This method subscribes to the topics for the agent
 	 * @returns void
 	 */
-	protected _subscribeToTopics(topics: Topic[]): void {
-		topics.forEach((topic: Topic) => {
+	protected _subscribeToTopics(): void {
+		Object.keys(this._topicToFunctionMap).forEach(topic => {
 			this._mqttClient.subscribe(topic);
 			this._logger.debug({ topic }, 'Subscribed to topic');
 		});
@@ -70,7 +71,7 @@ export abstract class Agent implements IAgent {
 			const payload = message.toString();
 			this._logger.debug({ topic, message: JSON.parse(payload) }, 'Message received');
 
-			const functionToCall = this._topicToFunctionMap[topic as Topic];
+			const functionToCall = this._topicToFunctionMap[topic];
 			if (!functionToCall) return;
 
 			functionToCall(payload);

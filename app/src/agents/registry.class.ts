@@ -5,7 +5,7 @@
  */
 import { basename } from "path";
 
-import { AgentType, logger, Topic, type MQTTConfig } from "../utils";
+import { AgentType, logger, Topics, type T_MqttConfig } from "../utils";
 import { Agent } from "./agent.abstract";
 
 /**
@@ -13,19 +13,18 @@ import { Agent } from "./agent.abstract";
  * @class RegistryAgent
  */
 export class RegistryAgent extends Agent {
-
 	private readonly _agents: Record<string, Record<string, string>> = {};
 	protected readonly _topicToFunctionMap: Record<string, (message: string) => void> = {
-		[Topic.REGISTRY_AGENTS]: this._handleAgentRegistration.bind(this),
+		[Topics.REGISTRY_AGENTS]: this._handleAgentRegistration.bind(this),
 	};
 
-	constructor(type: AgentType, mqttConfigs: MQTTConfig) {
+	constructor(mqttConfigs: T_MqttConfig) {
 		const _logger = logger.child({
 			name: basename(__filename),
 			agent_name: AgentType.REGISTRY
 		});
-		super(AgentType.REGISTRY, type, mqttConfigs, _logger);
-		this._subscribeToTopics(Object.keys(this._topicToFunctionMap) as Topic[]);
+		super(AgentType.REGISTRY, AgentType.REGISTRY, mqttConfigs, _logger);
+		this._subscribeToTopics();
 		this._logger.info(`${this.name} agent initialized`);
 	}
 
@@ -56,9 +55,9 @@ export class RegistryAgent extends Agent {
 		this._logger.debug({ agents: this._agents }, 'Agents registered');
 
 		const payload = JSON.stringify({ success: true, id });
-		this._mqttClient.publish(Topic.REGISTRY_AGENTS_ACK, payload);
+		this._mqttClient.publish(Topics.REGISTRY_AGENTS_ACK, payload);
 		this._logger.debug(
-			{ payload, topic: Topic.REGISTRY_AGENTS_ACK },
+			{ payload, topic: Topics.REGISTRY_AGENTS_ACK },
 			'Response to the agent registration request'
 		);
 	}

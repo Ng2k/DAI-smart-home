@@ -6,10 +6,10 @@
 
 /**
  * @brief MQTT configuration type
- * @type MQTTConfig
+ * @type T_MqttConfig
  */
-export type MQTTConfig = {
-	brokerUrl: string;
+export type T_MqttConfig = {
+	url: string;
 	username: string;
 	password: string;
 };

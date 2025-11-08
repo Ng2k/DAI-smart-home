@@ -7,7 +7,7 @@ import { basename } from "path"
 
 import type { AgentType } from "../utils/enums";
 import { Agent } from "./agent.abstract";
-import { logger, Topic, type MQTTConfig } from "../utils";
+import { logger, Topics, type T_MqttConfig } from "../utils";
 
 /**
  * @brief Room agent class
@@ -16,7 +16,7 @@ import { logger, Topic, type MQTTConfig } from "../utils";
 export class RoomAgent extends Agent {
 	private _isRegistered: boolean = false;
 	protected override readonly  _topicToFunctionMap: Record<string, (message: string) => void> = {
-		[Topic.REGISTRY_AGENTS_ACK]: this._handleRegistrationAck.bind(this),
+		[Topics.REGISTRY_AGENTS_ACK]: this._handleRegistrationAck.bind(this),
 	};
 
 	/*
@@ -25,13 +25,13 @@ export class RoomAgent extends Agent {
 	private controllerManager: ControllerManager;
 	*/
 
-	constructor(name: string, type: AgentType, mqttConfigs: MQTTConfig) {
+	constructor(name: string, type: AgentType, mqttConfigs: T_MqttConfig) {
 		const _logger = logger.child({
 			name: basename(__filename),
 			agent_name: name
 		});
 		super(name, type, mqttConfigs, _logger);
-		this._subscribeToTopics(Object.keys(this._topicToFunctionMap) as Topic[]);
+		this._subscribeToTopics();
 		this._registerAgent();
 		/*
 		this.actuatorManager = new ActuatorManager();
@@ -66,8 +66,8 @@ export class RoomAgent extends Agent {
 		}
 
 		const payload = JSON.stringify(this.toJSON());
-		this._mqttClient.publish(Topic.REGISTRY_AGENTS, payload);
-		this._logger.debug({ payload, topic: Topic.REGISTRY_AGENTS }, 'Requesting registration');
+		this._mqttClient.publish(Topics.REGISTRY_AGENTS, payload);
+		this._logger.debug({ payload, topic: Topics.REGISTRY_AGENTS }, 'Requesting registration');
 	}
 	/**
 	 * @brief Handle the registration acknowledgment
@@ -80,7 +80,7 @@ export class RoomAgent extends Agent {
 		if (id !== this.id) {
 			this._logger.warn(
 				{ message },
-				'Registration acknowledgment received for a different agent. Check subscriptions for this agent'
+				'Registration acknowledgment received for a different agent. Check subscriptions'
 			);
 			return;
 		}

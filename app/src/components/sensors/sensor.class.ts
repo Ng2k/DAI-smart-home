@@ -3,11 +3,14 @@
  * @file sensor.class.ts
  * @author Nicola Guerra
  */
+import { basename } from "path";
 import { randomUUID } from "crypto";
 
-import type { MqttClient } from "mqtt";
+import mqtt, { type MqttClient } from "mqtt";
 
-import { type Logger, SensorType } from "../../utils";
+import { TimeUom } from "../../utils";
+import type { Logger, T_MqttConfig, T_SensorConfig } from "../../utils";
+import logger from "../../utils/logger";
 
 /**
  * @brief Sensor class
@@ -15,28 +18,52 @@ import { type Logger, SensorType } from "../../utils";
  */
 export class Sensor {
 	protected readonly _id: string = randomUUID();
+	protected readonly _mqttClient: MqttClient;
+	protected readonly _timeUom: TimeUom = new TimeUom();
+	protected readonly _logger: Logger = logger.child({ name: basename(__filename) });
 
 	constructor(
-		public readonly type: SensorType,
-		public readonly uom: string,
-		public readonly publishFrequencySec: number,
-		protected readonly _mqttClient: MqttClient,
-		protected readonly _logger: Logger,
-	) {}
+		protected readonly _sensorConfig: T_SensorConfig,
+		_mqttConfigs: T_MqttConfig
+	) {
+		this._mqttClient = mqtt.connect(_mqttConfigs.url, {
+			username: _mqttConfigs.username,
+			password: _mqttConfigs.password
+		});
+		const { room, type } = this._sensorConfig;
+		this._logger.info(`Sensor '${room}/${type}' initialized`);
+	}
 
-	// protected methods ------------------------------------------------------------------------------
-	protected _startComponent(): void {
-		this._logger.info(`Sensor '${this.type}' started`);
+	// public methods ------------------------------------------------------------------------------
+	public start(): void {
+		const { room, type } = this._sensorConfig;
+		const logger = this._logger;
+		logger.info(`Sensor '${room}/${type}' started`);
+
+		const frequency = this._sensorConfig.frequency;
+		const frequencyUom = this._sensorConfig.frequencyUom;
+		const frequencyConverted = this._timeUom.convert(frequency, frequencyUom);
 
 		setInterval(() => {
-			this._mqttClient.publish(`${this.type}/${this._id}/value`, this.value.toString());
-		}, this.publishFrequencySec * 1000);
+			const payload = {
+				id: this._id,
+				uom: this._sensorConfig.readUom,
+				value: Number(Math.random() * 100).toFixed(2),
+			};
+			const debug = {
+				topic: this._sensorConfig.topic,
+				sensor_id: this._id,
+				sensor_name: `${room}/${type}`,
+				payload
+			}
+			this._mqttClient.publish(this._sensorConfig.topic, JSON.stringify(payload));
+			logger.debug(debug, 'Sensor published value');
+		}, frequencyConverted);
 	}
 
-	protected _stopComponent(): void {
-		this._logger.info(`Sensor '${this.type}' stopped`);
-		this._mqttClient.unsubscribe(`${this.type}/${this._id}/set`);
-		this._mqttClient.unsubscribe(`${this.type}/${this._id}/get`);
+	public stop(): void {
+		const { room, type } = this._sensorConfig;
+		this._logger.info(`Sensor '${room}/${type}' stopped`);
+		this._mqttClient.unsubscribe(this._sensorConfig.topic);
 	}
-
 }

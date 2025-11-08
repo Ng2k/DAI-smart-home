@@ -3,7 +3,6 @@
  * @file agent.interface.ts
  * @author Nicola Guerra
  */
-import { AgentType } from "../utils/enums";
 
 /**
  * @brief Agent interface
@@ -11,8 +10,7 @@ import { AgentType } from "../utils/enums";
  */
 export interface IAgent {
 	readonly id: string;
-	readonly name: string;
-	readonly type: AgentType;
+	readonly agentConfig: Record<string, any>;
 
 	/**
 	 * @brief Convert the agent to a JSON object

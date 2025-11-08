@@ -1,7 +1,8 @@
 {
 	"registry": [
 		{
-			"type": "Registry"
+			"name": "registry",
+			"type": "registry"
 		}
 	],
 	"rooms": [
@@ -11,13 +12,23 @@
 			"sensors": [
 				{
 					"type": "temperature",
-					"uom": "°C",
-					"publishFrequencySec": 10,
+					"readUom": "°C",
+					"frequency": 2,
+					"frequencyUom": "sec",
 					"topic": "home/floor/1/room/living-room/sensors/temperature"
 				}
 			],
 			"actuators": [],
-			"controllers": []
+			"controllers": [
+				{
+					"type": "temperature",
+					"logic": "PID",
+					"topics": {
+						"publish": "home/floor/1/room/living-room/controllers/temperature",
+						"subscribe": "home/floor/1/room/living-room/sensors/temperature"
+					}
+				}
+			]
 		}
 	]
 }

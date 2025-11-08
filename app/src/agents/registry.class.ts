@@ -5,7 +5,7 @@
  */
 import { basename } from "path";
 
-import { AgentType, logger, Topics, type T_MqttConfig } from "../utils";
+import { logger, Topics, type Logger, type T_MqttConfig, type T_RegistryAgentConfig } from "../utils";
 import { Agent } from "./agent.abstract";
 
 /**
@@ -14,31 +14,18 @@ import { Agent } from "./agent.abstract";
  */
 export class RegistryAgent extends Agent {
 	private readonly _agents: Record<string, Record<string, string>> = {};
+	protected override readonly _logger: Logger = logger.child({ name: basename(__filename) });
 	protected readonly _topicToFunctionMap: Record<string, (message: string) => void> = {
 		[Topics.REGISTRY_AGENTS]: this._handleAgentRegistration.bind(this),
 	};
 
-	constructor(mqttConfigs: T_MqttConfig) {
-		const _logger = logger.child({
-			name: basename(__filename),
-			agent_name: AgentType.REGISTRY
-		});
-		super(AgentType.REGISTRY, AgentType.REGISTRY, mqttConfigs, _logger);
+	constructor(agentConfig: T_RegistryAgentConfig, mqttConfigs: T_MqttConfig) {
+		super(agentConfig, mqttConfigs);
 		this._subscribeToTopics();
-		this._logger.info(`${this.name} agent initialized`);
+		this._logger.info(`${agentConfig.name} agent initialized`);
 	}
 
 	// public methods-------------------------------------------------------------------------------
-	public override toJSON(): Record<string, any> {
-		return {
-			id: this.id,
-			name: this.name,
-			type: this.type
-		};
-	}
-	public override toString(): string {
-		return `${this.id} - ${this.name} - ${this.type}`;
-	}
 
 	// private methods------------------------------------------------------------------------------
 	private _handleAgentRegistration(message: string): void {

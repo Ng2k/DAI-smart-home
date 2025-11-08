@@ -5,53 +5,35 @@
  */
 import { basename } from "path"
 
-import type { AgentType } from "../utils/enums";
 import { Agent } from "./agent.abstract";
-import { logger, Topics, type T_MqttConfig } from "../utils";
+import { logger, type Logger, Topics, controllerTypeToClassMapping, } from "../utils";
+import type { T_MqttConfig, T_RoomAgentConfig, } from "../utils";
+import { Controller, Sensor } from "../components";
 
 /**
  * @brief Room agent class
  * @class RoomAgent
  */
 export class RoomAgent extends Agent {
+	protected override readonly _logger: Logger = logger.child({ name: basename(__filename) });
 	private _isRegistered: boolean = false;
+	protected readonly _sensors: Sensor[] = [];
+	protected readonly _controllers: Controller[] = [];
 	protected override readonly  _topicToFunctionMap: Record<string, (message: string) => void> = {
 		[Topics.REGISTRY_AGENTS_ACK]: this._handleRegistrationAck.bind(this),
 	};
 
-	/*
-	private sensorManager: SensorManager;
-	private actuatorManager: ActuatorManager;
-	private controllerManager: ControllerManager;
-	*/
-
-	constructor(name: string, type: AgentType, mqttConfigs: T_MqttConfig) {
-		const _logger = logger.child({
-			name: basename(__filename),
-			agent_name: name
-		});
-		super(name, type, mqttConfigs, _logger);
+	constructor(agentConfig: T_RoomAgentConfig, mqttConfigs: T_MqttConfig) {
+		super(agentConfig, mqttConfigs);
 		this._subscribeToTopics();
 		this._registerAgent();
-		/*
-		this.actuatorManager = new ActuatorManager();
-		this.controllerManager = new ControllerManager(); */
+		this._initializeSensors();
+		this._initializeControllers();
 
-		this._logger.info(`${this.name} agent initialized`);
+		this._logger.info(`${agentConfig.name} agent initialized`);
 	}
 
 	// public methods-------------------------------------------------------------------------------
-	public override toJSON(): Record<string, any> {
-		return {
-			id: this.id,
-			name: this.name,
-			type: this.type
-		};
-	}
-
-	public override toString(): string {
-		return `${this.id} - ${this.name} - ${this.type}`;
-	}
 
 	// private methods------------------------------------------------------------------------------
 	/**
@@ -68,6 +50,46 @@ export class RoomAgent extends Agent {
 		const payload = JSON.stringify(this.toJSON());
 		this._mqttClient.publish(Topics.REGISTRY_AGENTS, payload);
 		this._logger.debug({ payload, topic: Topics.REGISTRY_AGENTS }, 'Requesting registration');
+	}
+	/**
+	 * @brief Initialize the sensors
+	 * @details This method initializes the sensors
+	 * @returns void
+	 */
+	private _initializeSensors(): void {
+		const { sensors } = this.agentConfig as T_RoomAgentConfig;
+		sensors.map((sensor) => {
+			const sensorInstance = new Sensor(
+				{ ...sensor, room: this.agentConfig.name },
+				this.mqttConfigs
+			);
+			this._sensors.push(sensorInstance);
+			sensorInstance.start();
+		});
+		this._logger.info(`Sensors initialized`);
+	}
+	/**
+	 * @brief Initialize the controllers
+	 * @details This method initializes the controllers
+	 * @returns void
+	 */
+	private _initializeControllers(): void {
+		const { controllers } = this.agentConfig as T_RoomAgentConfig;
+		controllers.map((controller) => {
+			const type = controller.type;
+			const ControllerClass = controllerTypeToClassMapping[type];
+			if (!ControllerClass) {
+				this._logger.error({ type }, `Unknown controller type: ${type}`);
+				return;
+			}
+			const controllerInstance = new ControllerClass(
+				{ ...controller, room: this.agentConfig.name },
+				this.mqttConfigs
+			);
+			this._controllers.push(controllerInstance);
+			controllerInstance.start();
+		});
+		this._logger.info(`Controllers initialized`);
 	}
 	/**
 	 * @brief Handle the registration acknowledgment

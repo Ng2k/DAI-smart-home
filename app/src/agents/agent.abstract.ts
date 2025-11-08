@@ -5,8 +5,7 @@
  */
 import mqtt, { type MqttClient } from "mqtt";
 
-import { AgentType } from "../utils";
-import type { Logger, T_MqttConfig} from "../utils"
+import type { Logger, T_AgentConfig, T_MqttConfig } from "../utils"
 import type { IAgent } from "./agent.interface";
 
 /**
@@ -14,15 +13,14 @@ import type { IAgent } from "./agent.interface";
  * @class Agent
  */
 export abstract class Agent implements IAgent {
+	public readonly id: string = crypto.randomUUID().toString()
 	protected _mqttClient: MqttClient;
 	protected abstract readonly _topicToFunctionMap: Record<string, (message: string) => void>;
+	protected abstract readonly _logger: Logger;
 
 	constructor(
-		public readonly name: string,
-		public readonly type: AgentType,
-		public readonly mqttConfigs: T_MqttConfig,
-		protected readonly _logger: Logger,
-		public readonly id: string = crypto.randomUUID().toString(),
+		public readonly agentConfig: T_AgentConfig,
+		protected readonly mqttConfigs: T_MqttConfig
 	) {
 		this._mqttClient = mqtt.connect(mqttConfigs.url, {
 			username: mqttConfigs.username,
@@ -34,8 +32,16 @@ export abstract class Agent implements IAgent {
 	}
 
 	// public methods ------------------------------------------------------------------------------
-	public abstract toJSON(): Record<string, any>;
-	public abstract toString(): string;
+	public toJSON(): Record<string, any> {
+		return {
+			id: this.id,
+			...this.agentConfig
+		};
+	}
+
+	public toString(): string {
+		return JSON.stringify(this.toJSON(), null, 2);
+	}
 
 	// protected methods ---------------------------------------------------------------------------
 	/**

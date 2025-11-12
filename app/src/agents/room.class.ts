@@ -59,12 +59,12 @@ export class RoomAgent extends Agent {
 	private _initializeSensors(): void {
 		const { sensors } = this.agentConfig as T_RoomAgentConfig;
 		sensors.map((sensor) => {
-			const sensorInstance = new Sensor(
+			const instance = new Sensor(
 				{ ...sensor, room: this.agentConfig.name },
 				this.mqttConfigs
 			);
-			this._sensors.push(sensorInstance);
-			sensorInstance.start();
+			this._sensors.push(instance);
+			instance.start();
 		});
 		this._logger.info(`Sensors initialized`);
 	}

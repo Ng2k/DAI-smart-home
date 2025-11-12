@@ -17,6 +17,7 @@ import logger from "../../utils/logger";
 export class TemperatureController extends Controller {
 	public override readonly id: string = randomUUID();
 	protected override readonly _logger: Logger = logger.child({ name: basename(__filename) });
+	private _acState: bool = false;
 
 	constructor(controllerConfig: T_ControllerConfig, _mqttConfigs: T_MqttConfig) {
 		super(controllerConfig, _mqttConfigs);
@@ -61,5 +62,17 @@ export class TemperatureController extends Controller {
 		const payload = JSON.parse(message);
 		const { room, type } = this._controllerConfig;
 		this._logger.debug({ topic, payload }, `Message received from controller '${room}/${type}'`);
+
+		const { value, uom } = payload;
+		const { topics: { publish } } = this._controllerConfig;
+
+		if (+value > 30 && !this._acState) this._acState = true;
+		if (+value < 25 && this._acState) this._acState = false;
+
+		this._mqttClient.publish(publish, JSON.stringify({ ac: this._acState }))
+		this._logger.debug(
+			{ ac: this._acState },
+			`Command published to topic '${publish}' from controller '${room}/${type}'`
+		)
 	}
 }

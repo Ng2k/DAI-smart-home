@@ -4,7 +4,6 @@
  * @author Nicola Guerra
  */
 import { basename } from "path";
-import { randomUUID } from "crypto";
 
 import { Controller } from "./controller.abstract";
 import type { Logger, T_ControllerConfig, T_MqttConfig } from "../../utils";
@@ -15,19 +14,17 @@ import logger from "../../utils/logger";
  * @class TemperatureController
  */
 export class TemperatureController extends Controller {
-	public override readonly id: string = randomUUID();
-	protected override readonly _logger: Logger = logger.child({ name: basename(__filename) });
-	private _acState: bool = false;
+	protected readonly _logger: Logger = logger.child({ name: basename(__filename) });
+	private _acState: boolean = false;
 
-	constructor(controllerConfig: T_ControllerConfig, _mqttConfigs: T_MqttConfig) {
-		super(controllerConfig, _mqttConfigs);
-		const { room, type } = controllerConfig;
-		this._logger.info(`Controller '${room}/${type}' initialized`);
+	constructor(config: T_ControllerConfig, mqttConfig: T_MqttConfig) {
+		super(config, mqttConfig);
+		this._logger.info({}, 'Controller Initialized.')
 	}
 
 	// public methods ------------------------------------------------------------------------------
 	public start(): void {
-		const { room, type, topics: { subscribe } } = this._controllerConfig;
+		const { room, type, topics: { subscribe } } = this._config;
 		this._mqttClient.subscribe(subscribe, (error, granted) => {
 			if (error) {
 				this._logger.error(
@@ -46,7 +43,7 @@ export class TemperatureController extends Controller {
 	}
 
 	public stop(): void {
-		const { room, type, topics: { subscribe } } = this._controllerConfig;
+		const { room, type, topics: { subscribe } } = this._config;
 		this._mqttClient.unsubscribe(subscribe);
 		this._logger.info(`Controller '${room}/${type}' stopped`);
 	}
@@ -60,11 +57,11 @@ export class TemperatureController extends Controller {
 	 */
 	protected _onMessage(topic: string, message: string): void {
 		const payload = JSON.parse(message);
-		const { room, type } = this._controllerConfig;
+		const { room, type } = this._config;
 		this._logger.debug({ topic, payload }, `Message received from controller '${room}/${type}'`);
 
 		const { value, uom } = payload;
-		const { topics: { publish } } = this._controllerConfig;
+		const { topics: { publish } } = this._config;
 
 		if (+value > 30 && !this._acState) this._acState = true;
 		if (+value < 25 && this._acState) this._acState = false;

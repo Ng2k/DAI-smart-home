@@ -1,2 +1,3 @@
 export { Controller } from "./controller.abstract";
-export type { IController } from "./controller.interface";
+export { TemperatureController } from "./temperature.class";
+

@@ -3,45 +3,30 @@
  * @file controller.abstract.ts
  * @author Nicola Guerra
  */
-import { basename } from "path";
-import { randomUUID } from "crypto";
-
-import mqtt, { type MqttClient } from "mqtt";
-
-import type { Logger, T_ControllerConfig, T_MqttConfig } from "../../utils";
-import type { IController } from "./controller.interface";
+import type { T_ControllerConfig, T_MqttConfig } from "../../utils";
+import { Component } from "../component.abstract";
 
 /**
  * @brief Controller abstract class
  * @class Controller
  */
-export abstract class Controller implements IController {
-	public readonly id: string = randomUUID();
-	protected readonly _mqttClient: MqttClient;
-	protected abstract readonly _logger: Logger;
-
+export abstract class Controller extends Component {
 	constructor(
-		protected readonly _controllerConfig: T_ControllerConfig,
+		protected override readonly _config: T_ControllerConfig,
 		_mqttConfigs: T_MqttConfig,
 	) {
-		this._mqttClient = mqtt.connect(_mqttConfigs.url, {
-			username: _mqttConfigs.username,
-			password: _mqttConfigs.password
-		});
+		super(_config, _mqttConfigs);
 	}
 
 	// public methods ------------------------------------------------------------------------------
-	public abstract start(): void;
-	public abstract stop(): void;
-
 	public toJSON(): Record<string, any> {
 		return {
-			id: this.id,
-			controllerConfig: this._controllerConfig,
+			id: this._id,
+			config: this._config,
 		};
 	}
 
-	public toString(): string {
+	public override toString(): string {
 		return JSON.stringify(this.toJSON());
 	}
 

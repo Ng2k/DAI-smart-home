@@ -6,9 +6,15 @@
 import { basename } from "path"
 
 import { Agent } from "./agent.abstract";
-import { logger, type Logger, Topics, controllerTypeToClassMapping, sensorTypeToClassMapping } from "../utils";
-import type { T_MqttConfig, T_RoomAgentConfig, } from "../utils";
-import { Controller, Sensor } from "../components";
+import {
+	logger,
+	Topics,
+	controllerTypeToClassMapping,
+	sensorTypeToClassMapping,
+	actuatorTypeToClassMapping
+} from "../utils";
+import type { Logger, T_MqttConfig, T_RoomAgentConfig, } from "../utils";
+import { Controller, Sensor, Actuator } from "../components";
 
 /**
  * @brief Room agent class
@@ -18,6 +24,7 @@ export class RoomAgent extends Agent {
 	protected override readonly _logger: Logger = logger.child({ name: basename(__filename) });
 	private _isRegistered: boolean = false;
 	protected readonly _sensors: Sensor[] = [];
+	protected readonly _actuators: Actuator[] = [];
 	protected readonly _controllers: Controller[] = [];
 	protected override readonly  _topicToFunctionMap: Record<string, (message: string) => void> = {
 		[Topics.REGISTRY_AGENTS_ACK]: this._handleRegistrationAck.bind(this),
@@ -73,6 +80,29 @@ export class RoomAgent extends Agent {
 			sensorInstance.start();
 		});
 		this._logger.info(`Sensors initialized`);
+	}
+	/**
+	 * @brief Initialize the actuators
+	 * @details This method initializes the actuators of the agent
+	 * @returns void
+	 */
+	private _initializeActuators(): void {
+		const { actuators } = this.agentConfig as T_RoomAgentConfig;
+		actuators.map((actuator) => {
+			const type = actuator.type
+			const ActuatorClass = actuatorTypeToClassMapping[type];
+			if(!ActuatorClass) {
+				this._logger.error({ type }, `Unknown actuator type: ${type}`);
+				return;
+			}
+			const actuatorInstance = new ActuatorClass(
+				{ ...actuator, room: this.agentConfig.name },
+				this.mqttConfigs
+			);
+			this._actuators.push(actuatorInstance);
+			actuatorInstance.start();
+		});
+		this._logger.info(`Actuators initialized`);
 	}
 	/**
 	 * @brief Initialize the controllers

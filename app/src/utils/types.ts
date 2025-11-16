@@ -4,7 +4,7 @@
  * @author Nicola Guerra
  */
 
-import type { AgentType, SensorType, Uom, ControllerType } from "./enums";
+import type { AgentType, SensorType, Uom, ControllerType, ActuatorType } from "./enums";
 
 /**
  * @brief MQTT configuration type
@@ -39,7 +39,7 @@ export type T_RoomAgentConfig = {
 	name: string;
 	type: AgentType;
 	sensors: T_SensorConfig[];
-	actuators: [];
+	actuators: T_ActuatorConfig[];
 	controllers: T_ControllerConfig[];
 };
 
@@ -69,3 +69,23 @@ export type T_ControllerConfig = {
 		subscribe: string;
 	};
 };
+
+/**
+ * @brief Actuator configuration type
+ * @type T_ActuatorConfig
+ */
+export type T_ActuatorConfig = {
+	room: string;
+	type: ActuatorType;
+	topics: {
+		publish: string,
+		subscribe: string
+	}
+};
+
+/**
+ * @brief Component configuration type
+ * @type T_ComponentConfig
+ */
+export type T_ComponentConfig = T_SensorConfig | T_ActuatorConfig | T_ControllerConfig;
+

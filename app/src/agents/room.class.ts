@@ -6,7 +6,7 @@
 import { basename } from "path"
 
 import { Agent } from "./agent.abstract";
-import { logger, type Logger, Topics, controllerTypeToClassMapping, } from "../utils";
+import { logger, type Logger, Topics, controllerTypeToClassMapping, sensorTypeToClassMapping } from "../utils";
 import type { T_MqttConfig, T_RoomAgentConfig, } from "../utils";
 import { Controller, Sensor } from "../components";
 
@@ -59,12 +59,18 @@ export class RoomAgent extends Agent {
 	private _initializeSensors(): void {
 		const { sensors } = this.agentConfig as T_RoomAgentConfig;
 		sensors.map((sensor) => {
-			const instance = new Sensor(
+			const type = sensor.type
+			const SensorClass = sensorTypeToClassMapping[type];
+			if(!SensorClass) {
+				this._logger.error({ type }, `Unknown sensor type: ${type}`);
+				return;
+			}
+			const sensorInstance = new SensorClass(
 				{ ...sensor, room: this.agentConfig.name },
 				this.mqttConfigs
 			);
-			this._sensors.push(instance);
-			instance.start();
+			this._sensors.push(sensorInstance);
+			sensorInstance.start();
 		});
 		this._logger.info(`Sensors initialized`);
 	}

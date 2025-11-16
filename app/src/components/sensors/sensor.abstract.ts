@@ -1,6 +1,6 @@
 /**
- * @brief Sensor class file for the project
- * @file sensor.class.ts
+ * @file sensor.abstract.ts
+ * @brief Abstract class for sensors
  * @author Nicola Guerra
  */
 import { basename } from "path";
@@ -8,15 +8,15 @@ import { randomUUID } from "crypto";
 
 import mqtt, { type MqttClient } from "mqtt";
 
-import { TimeUom } from "../../utils";
+import { logger, TimeUom } from "../../utils";
 import type { Logger, T_MqttConfig, T_SensorConfig } from "../../utils";
-import logger from "../../utils/logger";
+import type { IComponent } from "../component.interface.ts"
 
 /**
- * @brief Sensor class
  * @class Sensor
+ * @brief abstract class for sensor
  */
-export class Sensor {
+export abstract class Sensor implements IComponent {
 	protected readonly _id: string = randomUUID();
 	protected readonly _mqttClient: MqttClient;
 	protected readonly _timeUom: TimeUom = new TimeUom();
@@ -34,7 +34,8 @@ export class Sensor {
 		this._logger.info(`Sensor '${room}/${type}' initialized`);
 	}
 
-	// public methods ------------------------------------------------------------------------------
+	// public methods --------------------------------------------------------------------------------
+
 	public start(): void {
 		const { room, type } = this._sensorConfig;
 		const logger = this._logger;
@@ -45,11 +46,7 @@ export class Sensor {
 		const frequencyConverted = this._timeUom.convert(frequency, frequencyUom);
 
 		setInterval(() => {
-			const payload = {
-				id: this._id,
-				uom: this._sensorConfig.readUom,
-				value: Number(Math.random() * 100).toFixed(2),
-			};
+			const payload = this._run();
 			const debug = {
 				topic: this._sensorConfig.topic,
 				sensor_id: this._id,
@@ -66,4 +63,11 @@ export class Sensor {
 		this._logger.info(`Sensor '${room}/${type}' stopped`);
 		this._mqttClient.unsubscribe(this._sensorConfig.topic);
 	}
+
+	// protected methods -----------------------------------------------------------------------------
+	/**
+	 * @brief Function for the creation of component values
+	 * @return Record<string, any>
+	 */
+	protected abstract _run(): Record<string, any>;
 }

@@ -8,8 +8,8 @@ import { basename } from "path";
 
 import mqtt, { type MqttClient } from "mqtt";
 
-import { TimeUom, logger } from "../utils";
-import type { Logger, T_ComponentConfig, T_MqttConfig } from "../utils";
+import { TimeUom } from "../utils";
+import type { T_ComponentConfig, T_MqttConfig } from "../utils";
 
 import type { IComponent } from "./component.interface";
 

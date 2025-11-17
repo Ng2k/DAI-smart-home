@@ -14,8 +14,7 @@ import {
 	actuatorTypeToClassMapping
 } from "../utils";
 import type { Logger, T_MqttConfig, T_RoomAgentConfig, } from "../utils";
-import { Controller, Sensor, Actuator, AcActuator } from "../components";
-import { act } from "react";
+import { Controller, Sensor, Actuator } from "../components";
 
 /**
  * @brief Room agent class

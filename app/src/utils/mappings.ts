@@ -4,7 +4,11 @@
  * @author Nicola Guerra
  */
 
-import { AcActuator, Actuator, Controller, Sensor, TemperatureController, TemperatureSensor } from "../components";
+import {
+	Actuator, HeaterActuator,
+	Controller, TemperatureController,
+	Sensor, TemperatureSensor,
+} from "../components";
 import { ActuatorType, ControllerType, SensorType } from "./enums";
 
 /**
@@ -28,5 +32,5 @@ export const sensorTypeToClassMapping: Record<string, new (...args: any[]) => Se
  * @type T_ActuatorTypeToClassMapping
  */
 export const actuatorTypeToClassMapping: Record<string, new (...args: any[]) => Actuator> = {
-	[ActuatorType.HEATER]: AcActuator,
+	[ActuatorType.HEATER]: HeaterActuator,
 };

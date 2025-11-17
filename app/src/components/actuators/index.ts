@@ -1,2 +1,2 @@
 export * from "./actuator.abstract";
-export * from "./ac.class";
+export * from "./heater.class";

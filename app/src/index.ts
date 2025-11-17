@@ -13,12 +13,10 @@ const instatiateAgents = (mqttConfig: T_MqttConfig): Promise<T_Agents> => {
 		const registryAgents = registry.map((config) => {
 			return new RegistryAgent(config as T_RegistryAgentConfig, mqttConfig);
 		});
-		setTimeout(() => {
-			const roomAgents = rooms.map((config) => {
-				return new RoomAgent(config as T_RoomAgentConfig, mqttConfig)
-			});
-			resolve({ registryAgents, roomAgents });
-		}, 2000);
+		const roomAgents = rooms.map((config) => {
+			return new RoomAgent(config as T_RoomAgentConfig, mqttConfig)
+		});
+		resolve({ registryAgents, roomAgents });
 	});
 }
 
@@ -26,6 +24,7 @@ async function main(): Promise<void> {
 	logger.info("Starting the application");
 	const mqttConfig = new MqttConfig().toJSON();
 	const { registryAgents, roomAgents } = await instatiateAgents(mqttConfig);
+	roomAgents.forEach(room => room.start());
 }
 
 main();

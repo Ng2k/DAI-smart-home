@@ -64,7 +64,7 @@ export type T_ControllerConfig = {
 	room: string;
 	type: ControllerType;
 	logic: string;
-	topics: {
+	topic: {
 		publish: string;
 		subscribe: string;
 	};
@@ -77,7 +77,7 @@ export type T_ControllerConfig = {
 export type T_ActuatorConfig = {
 	room: string;
 	type: ActuatorType;
-	topics: {
+	topic: {
 		publish: string,
 		subscribe: string
 	}

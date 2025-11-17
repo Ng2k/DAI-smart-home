@@ -14,7 +14,8 @@ import {
 	actuatorTypeToClassMapping
 } from "../utils";
 import type { Logger, T_MqttConfig, T_RoomAgentConfig, } from "../utils";
-import { Controller, Sensor, Actuator } from "../components";
+import { Controller, Sensor, Actuator, AcActuator } from "../components";
+import { act } from "react";
 
 /**
  * @brief Room agent class
@@ -36,11 +37,22 @@ export class RoomAgent extends Agent {
 		this._registerAgent();
 		this._initializeSensors();
 		this._initializeControllers();
+		this._initializeActuators();
 
 		this._logger.info(`${agentConfig.name} agent initialized`);
 	}
 
 	// public methods-------------------------------------------------------------------------------
+	public start(): void {
+		this._sensors.forEach(sensor => sensor.start());
+		this._actuators.forEach(actuator => actuator.start());
+		this._controllers.forEach(controller => controller.start());
+	}
+	public stop(): void {
+		this._sensors.forEach(sensor => sensor.stop());
+		this._actuators.forEach(actuator => actuator.stop());
+		this._controllers.forEach(controller => controller.stop());
+	}
 
 	// private methods------------------------------------------------------------------------------
 	/**
@@ -77,7 +89,6 @@ export class RoomAgent extends Agent {
 				this.mqttConfigs
 			);
 			this._sensors.push(sensorInstance);
-			sensorInstance.start();
 		});
 		this._logger.info(`Sensors initialized`);
 	}
@@ -100,7 +111,6 @@ export class RoomAgent extends Agent {
 				this.mqttConfigs
 			);
 			this._actuators.push(actuatorInstance);
-			actuatorInstance.start();
 		});
 		this._logger.info(`Actuators initialized`);
 	}
@@ -123,7 +133,6 @@ export class RoomAgent extends Agent {
 				this.mqttConfigs
 			);
 			this._controllers.push(controllerInstance);
-			controllerInstance.start();
 		});
 		this._logger.info(`Controllers initialized`);
 	}

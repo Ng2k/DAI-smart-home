@@ -19,12 +19,8 @@ export class TemperatureController extends Controller {
 
 	constructor(config: T_ControllerConfig, mqttConfig: T_MqttConfig) {
 		super(config, mqttConfig);
-		this._logger.info({}, 'Controller Initialized.')
-	}
 
-	// public methods ------------------------------------------------------------------------------
-	public start(): void {
-		const { room, type, topics: { subscribe } } = this._config;
+		const { room, type, topic: { subscribe } } = this._config;
 		this._mqttClient.subscribe(subscribe, (error, granted) => {
 			if (error) {
 				this._logger.error(
@@ -36,6 +32,11 @@ export class TemperatureController extends Controller {
 			this._logger.debug({ granted }, `Controller '${room}/${type}' subscribed to topic`);
 		});
 
+		this._logger.info({}, 'Controller Initialized.')
+	}
+
+	// public methods ------------------------------------------------------------------------------
+	public start(): void {
 		this._mqttClient.on(
 			'message',
 			(topic, message) => this._onMessage(topic, message.toString())
@@ -43,7 +44,7 @@ export class TemperatureController extends Controller {
 	}
 
 	public stop(): void {
-		const { room, type, topics: { subscribe } } = this._config;
+		const { room, type, topic: { subscribe } } = this._config;
 		this._mqttClient.unsubscribe(subscribe);
 		this._logger.info(`Controller '${room}/${type}' stopped`);
 	}
@@ -60,8 +61,8 @@ export class TemperatureController extends Controller {
 		const { room, type } = this._config;
 		this._logger.debug({ topic, payload }, `Message received from controller '${room}/${type}'`);
 
-		const { value, uom } = payload;
-		const { topics: { publish } } = this._config;
+		const { value } = payload;
+		const { topic: { publish } } = this._config;
 
 		if (+value > 30 && !this._acState) this._acState = true;
 		if (+value < 25 && this._acState) this._acState = false;

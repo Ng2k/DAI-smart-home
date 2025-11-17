@@ -3,8 +3,6 @@
  * @file registry.class.ts
  * @author Nicola Guerra
  */
-import { basename } from "path";
-
 import { logger, Topics, type Logger, type T_MqttConfig, type T_RegistryAgentConfig } from "../utils";
 import { Agent } from "./agent.abstract";
 
@@ -14,10 +12,11 @@ import { Agent } from "./agent.abstract";
  */
 export class RegistryAgent extends Agent {
 	private readonly _agents: Record<string, Record<string, string>> = {};
-	protected override readonly _logger: Logger = logger.child({ name: basename(__filename) });
+
 	protected readonly _topicToFunctionMap: Record<string, (message: string) => void> = {
 		[Topics.REGISTRY_AGENTS]: this._handleAgentRegistration.bind(this),
 	};
+	protected override readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
 	constructor(agentConfig: T_RegistryAgentConfig, mqttConfigs: T_MqttConfig) {
 		super(agentConfig, mqttConfigs);

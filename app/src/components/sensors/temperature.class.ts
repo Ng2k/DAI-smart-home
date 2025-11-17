@@ -3,8 +3,6 @@
  * @file sensor.class.ts
  * @author Nicola Guerra
  */
-import { basename } from "path";
-
 import { logger } from "../../utils";
 import type { Logger, T_MqttConfig, T_SensorConfig } from "../../utils";
 import { Sensor } from "./sensor.abstract";
@@ -14,7 +12,7 @@ import { Sensor } from "./sensor.abstract";
  * @class Sensor
  */
 export class TemperatureSensor extends Sensor {
-	protected readonly _logger: Logger = logger.child({ name: basename(__filename) });
+	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
 	constructor(config: T_SensorConfig, mqttConfig: T_MqttConfig) {
 		super(config, mqttConfig);

@@ -3,13 +3,11 @@
  * @file heater.class.ts
  * @author Nicola Guerra
  */
-import { basename } from "path";
-
 import { logger, type Logger, type T_ActuatorConfig, type T_MqttConfig } from "../../utils"
 import { Actuator } from "./actuator.abstract";
 
 export class HeaterActuator extends Actuator {
-	protected readonly _logger: Logger = logger.child({ name: basename(__filename) });
+	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
 	constructor(config: T_ActuatorConfig, mqttConfig: T_MqttConfig) {
 		super(config, mqttConfig);

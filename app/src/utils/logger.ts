@@ -32,7 +32,7 @@ const logger_options_prod = {
 
 const dev_env = ['dev', 'local', 'test'];
 
-const logger = pino({
+export default pino({
     level: Bun.env.LOG_LEVEL || 'info',
     ...(dev_env.includes(Bun.env.NODE_ENV || '') ? logger_options_dev : logger_options_prod),
 	redact: {
@@ -41,6 +41,4 @@ const logger = pino({
 		remove: true,
 	},
 });
-
-export default logger;
 export type { Logger };

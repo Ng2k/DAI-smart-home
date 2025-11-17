@@ -3,18 +3,16 @@
  * @file temperature.class.ts
  * @author Nicola Guerra
  */
-import { basename } from "path";
-
 import { Controller } from "./controller.abstract";
 import type { Logger, T_ControllerConfig, T_MqttConfig } from "../../utils";
-import logger from "../../utils/logger";
+import { logger } from "../../utils";
 
 /**
  * @brief Temperature controller class
  * @class TemperatureController
  */
 export class TemperatureController extends Controller {
-	protected readonly _logger: Logger = logger.child({ name: basename(__filename) });
+	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
 	private _acState: boolean = false;
 
 	constructor(config: T_ControllerConfig, mqttConfig: T_MqttConfig) {

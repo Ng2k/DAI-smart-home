@@ -3,8 +3,6 @@
  * @file room.class.ts
  * @author Nicola Guerra
  */
-import { basename } from "path"
-
 import { Agent } from "./agent.abstract";
 import {
 	logger,
@@ -21,11 +19,12 @@ import { Controller, Sensor, Actuator } from "../components";
  * @class RoomAgent
  */
 export class RoomAgent extends Agent {
-	protected override readonly _logger: Logger = logger.child({ name: basename(__filename) });
 	private _isRegistered: boolean = false;
+
 	protected readonly _sensors: Sensor[] = [];
 	protected readonly _actuators: Actuator[] = [];
 	protected readonly _controllers: Controller[] = [];
+	protected override readonly _logger: Logger = logger.child({ name: this.constructor.name });
 	protected override readonly  _topicToFunctionMap: Record<string, (message: string) => void> = {
 		[Topics.REGISTRY_AGENTS_ACK]: this._handleRegistrationAck.bind(this),
 	};

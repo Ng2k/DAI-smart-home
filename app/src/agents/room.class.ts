@@ -8,7 +8,6 @@ import {
 	logger,
 	Topics,
 	controllerTypeToClassMapping,
-	envTypeToClassMapping,
 	sensorTypeToClassMapping,
 	actuatorTypeToClassMapping
 } from "../utils";
@@ -31,6 +30,7 @@ export class RoomAgent extends Agent {
 	protected override readonly _logger: Logger = logger.child({ name: this.constructor.name });
 	protected override readonly _topicToFunctionMap: Record<string, (message: string) => void> = {
 		[Topics.REGISTRY_AGENTS_ACK]: this._handleRegistrationAck.bind(this),
+		[Topics.ACTUATOR_HEATER_ACK]: this._handleHeater.bind(this),
 	};
 
 	constructor(
@@ -44,18 +44,19 @@ export class RoomAgent extends Agent {
 			new TemperatureModel(roomEnvConfig.temperature as TemperatureModelConfig)
 		);
 
-		this._subscribeToTopics();
+
 		this._registerAgent();
 		this._initializeSensors();
 		this._initializeControllers();
 		this._initializeActuators();
 
+		this._subscribeToTopics();
 		this._startEnvLoop();
 
 		this._logger.info(`${agentConfig.name} agent initialized`);
 	}
 
-	// public methods-------------------------------------------------------------------------------
+	// public methods---------------------------------------------------------------------------------
 	public start(): void {
 		this._sensors.forEach(sensor => sensor.start());
 		this._actuators.forEach(actuator => actuator.start());
@@ -67,7 +68,18 @@ export class RoomAgent extends Agent {
 		this._controllers.forEach(controller => controller.stop());
 	}
 
-	// private methods------------------------------------------------------------------------------
+	// protected methods------------------------------------------------------------------------------
+	protected override _subscribeToTopics(): void {
+		super._subscribeToTopics();
+
+		this._actuators.forEach(act => {
+			const { config: { topic: { publish } } } = act.toJSON();
+			this._logger.debug({ publish }, "Room agent subscribed to topic");
+			this._mqttClient.subscribe(publish);
+		})
+	}
+
+	// private methods--------------------------------------------------------------------------------
 	/**
 	 * @brief Register the agent
 	 * @details This method registers the agent with the registry
@@ -158,7 +170,7 @@ export class RoomAgent extends Agent {
 	 * @returns void
 	 */
 	private _handleRegistrationAck(message: string): void {
-		const { success, id }: Record<string, boolean | string> = JSON.parse(message);
+		const { success, id } = JSON.parse(message);
 		if (id !== this.id) {
 			this._logger.warn(
 				{ message },
@@ -172,6 +184,21 @@ export class RoomAgent extends Agent {
 		}
 		this._logger.info({ message }, 'Registration acknowledged by the registry');
 		this._isRegistered = true;
+	}
+	/**
+	 * @brief Handle the heater state
+	 * @param message The message to handle
+	 * @returns void
+	 */
+	private _handleHeater(message: string): void {
+		const { ack, value } = JSON.parse(message.toString());
+
+		if (!ack) {
+			this._logger.error("Some errors in the actuator");
+			return;
+		}
+
+		this._roomEnv.temperatureModel.setHeaterState(value);
 	}
 	/**
 	 * @brief Start the simulation for all the sensors

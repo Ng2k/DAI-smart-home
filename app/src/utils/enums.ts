@@ -45,6 +45,7 @@ export enum ControllerType {
 export enum Topics {
 	REGISTRY_AGENTS = "home/registry/agents",
 	REGISTRY_AGENTS_ACK = "home/registry/agents/ack",
+	ACTUATOR_HEATER_ACK = "home/floor/1/room/living-room/actuators/heater",
 }
 
 /**

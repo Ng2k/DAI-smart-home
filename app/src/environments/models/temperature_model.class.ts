@@ -56,7 +56,7 @@ export class TemperatureModel implements IModel {
 		const noise = (Math.random() * 2 - 1) * noiseAmplitude;
 		dT += noise;
 
-		this.temperature += dT;
+		this.temperature = +Number(this.temperature + dT).toFixed(2);
 	}
 
 }

@@ -13,7 +13,7 @@ import { logger } from "../../utils";
  */
 export class TemperatureController extends Controller {
 	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
-	private _acState: boolean = false;
+	private _heaterState: boolean = false;
 
 	constructor(config: T_ControllerConfig, mqttConfig: T_MqttConfig) {
 		super(config, mqttConfig);
@@ -61,13 +61,18 @@ export class TemperatureController extends Controller {
 
 		const { value } = payload;
 		const { topic: { publish } } = this._config;
+		let newState = this._heaterState;
 
-		if (+value > 30 && !this._acState) this._acState = true;
-		if (+value < 25 && this._acState) this._acState = false;
+		const isCold = (+value < 20 && !this._heaterState);
+		const isHot = (+value > 22 && this._heaterState)
+		if (isCold || isHot) newState = !this._heaterState;
 
-		this._mqttClient.publish(publish, JSON.stringify({ ac: this._acState }))
+		if (newState === this._heaterState) return;
+
+		this._heaterState = newState;
+		this._mqttClient.publish(publish, JSON.stringify({ heater: newState }))
 		this._logger.debug(
-			{ ac: this._acState },
+			{ heater: this._heaterState },
 			`Command published to topic '${publish}' from controller '${room}/${type}'`
 		)
 	}

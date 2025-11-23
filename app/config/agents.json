@@ -22,7 +22,7 @@
 				{
 					"type": "heater",
 					"topic": {
-						"publish": "home/floor/1/room/living-room/actuators/ac",
+						"publish": "home/floor/1/room/living-room/actuators/heater",
 						"subscribe": "home/floor/1/room/living-room/controllers/temperature"
 					}
 				}

@@ -49,21 +49,25 @@ export class HeaterActuator extends Actuator {
 	 * @returns void
 	 */
 	protected _onMessage(topic: string, message: string): void {
-		const payload = JSON.parse(message);
+		const { heater: value } = JSON.parse(message);
 		const { room, type } = this._config;
-		this._logger.debug({ topic, payload }, `Message received from controller`);
+		this._logger.debug({ topic, value }, `Message received from controller`);
 
-		//TODO: esegui operazione
 		this._logger.info({}, 'Actuator is executing...');
 
-		//TODO: pubblica ack operazione per conferma
 		const { topic: { publish } } = this._config;
-		this._mqttClient.publish(publish, JSON.stringify({}))
+		this._mqttClient.publish(publish, JSON.stringify({ ack: true, value }))
 		this._logger.debug(
-			{},
+			{ publish },
 			`Actuator ${room}/${type} has executed command from controller`
 		)
 	}
 }
+
+
+
+
+
+
 
 

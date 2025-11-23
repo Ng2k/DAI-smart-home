@@ -12,6 +12,19 @@ export abstract class Actuator extends Component {
 		_mqttConfigs: T_MqttConfig,
 	) {
 		super(_mqttConfigs);
+
+		const { room, type, topic: { subscribe } } = this._config;
+		this._mqttClient.subscribe(subscribe, (error, granted) => {
+			if (error) {
+				this._logger.error(
+					{ error },
+					`Error subscribing to controller topic ${subscribe}`
+				);
+				return;
+			}
+			this._logger.debug({ granted }, `Actuator '${room}/${type}' subscribed to topic`);
+		});
+
 	}
 
 	// public methods ------------------------------------------------------------------------------
@@ -24,5 +37,18 @@ export abstract class Actuator extends Component {
 
 	public override toString(): string {
 		return JSON.stringify(this.toJSON());
+	}
+
+	public start(): void {
+		this._mqttClient.on(
+			'message',
+			(topic, message) => this._onMessage(topic, message.toString())
+		);
+	}
+
+	public stop(): void {
+		const { room, type, topic: { subscribe } } = this._config;
+		this._mqttClient.unsubscribe(subscribe);
+		this._logger.info(`Actuator '${room}/${type}' stopped`);
 	}
 }

@@ -9,12 +9,17 @@ import {
 	Topics,
 	controllerTypeToClassMapping,
 	sensorTypeToClassMapping,
-	actuatorTypeToClassMapping
+	actuatorTypeToClassMapping,
 } from "../utils";
 import type { Logger, T_MqttConfig, T_RoomAgentConfig, } from "../utils";
 import { Controller, Sensor, Actuator } from "../components";
-import { type TemperatureModelConfig,
-	RoomEnv, TemperatureModel } from "../environments";
+import {
+	type HumidityModelConfig,
+	type TemperatureModelConfig,
+	RoomEnv,
+	TemperatureModel,
+	HumidityModel,
+} from "../environments";
 
 /**
  * @brief Room agent class
@@ -31,6 +36,7 @@ export class RoomAgent extends Agent {
 	protected override readonly _topicToFunctionMap: Record<string, (message: string) => void> = {
 		[Topics.REGISTRY_AGENTS_ACK]: this._handleRegistrationAck.bind(this),
 		[Topics.ACTUATOR_HEATER_ACK]: this._handleHeater.bind(this),
+		[Topics.ACTUATOR_DEHUMIDIFIER_ACK]: this._handleDehumidifier.bind(this),
 	};
 
 	constructor(
@@ -41,9 +47,9 @@ export class RoomAgent extends Agent {
 		super(agentConfig, mqttConfigs);
 
 		this._roomEnv = new RoomEnv(
-			new TemperatureModel(roomEnvConfig.temperature as TemperatureModelConfig)
+			new TemperatureModel(roomEnvConfig.temperature as TemperatureModelConfig),
+			new HumidityModel(roomEnvConfig.humidity as HumidityModelConfig),
 		);
-
 
 		this._registerAgent();
 		this._initializeSensors();
@@ -198,7 +204,22 @@ export class RoomAgent extends Agent {
 			return;
 		}
 
-		this._roomEnv.temperatureModel.setHeaterState(value);
+		this._roomEnv.temperatureModel.setState(value);
+	}
+	/**
+	 * @brief Handle the dehumidifier state
+	 * @param message The message to handle
+	 * @returns void
+	 */
+	private _handleDehumidifier(message: string): void {
+		const { ack, value } = JSON.parse(message.toString());
+
+		if (!ack) {
+			this._logger.error("Some errors in the actuator");
+			return;
+		}
+
+		this._roomEnv.dehumidifierModel.setState(value);
 	}
 	/**
 	 * @brief Start the simulation for all the sensors
@@ -206,7 +227,7 @@ export class RoomAgent extends Agent {
 	 */
 	private _startEnvLoop(): void {
 		setInterval(() => {
-			this._roomEnv.update(1);
+			this._roomEnv.update(2);
 		}, 1000);
 	}
 }

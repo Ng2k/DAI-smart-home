@@ -1,18 +1,18 @@
 /**
- * @brief Sensor class file for the project
- * @file sensor.class.ts
+ * @brief File for the class of the humidity sensor
+ * @file humidity.class.ts
  * @author Nicola Guerra
  */
-import { logger } from "../../utils";
-import type { Logger, T_MqttConfig, T_SensorConfig } from "../../utils";
-import { Sensor } from "./sensor.abstract";
-import type { RoomEnv } from "../../environments";
+import { Sensor } from "./sensor.abstract.ts";
+import type { Logger, T_SensorConfig, T_MqttConfig } from "../../utils/";
+import { logger } from "../../utils/";
+import { RoomEnv } from "../../environments/";
 
 /**
- * @brief Sensor class
- * @class Sensor
+ * @class HumiduitySensor
+ * @brief Class for the humidity sensor
  */
-export class TemperatureSensor extends Sensor {
+export class HumiditySensor extends Sensor {
 	protected override readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
 	constructor(config: T_SensorConfig, mqttConfig: T_MqttConfig, env: RoomEnv) {
@@ -38,13 +38,15 @@ export class TemperatureSensor extends Sensor {
 			'Finish sensor operations'
 		);
 	}
-
 	public override stop(): void {
 		super.stop();
-		this._logger.info({
-			room: this._config.room,
-			type: this._config.type
-		}, 'Sensor stopped.');
+		this._logger.info(
+			{
+				room: this._config.room,
+				type: this._config.type
+			},
+			'Sensor stopped.'
+		);
 	}
 
 	// protected methods -----------------------------------------------------------------------------
@@ -52,7 +54,7 @@ export class TemperatureSensor extends Sensor {
 		return {
 			id: this._id,
 			uom: (this._config as T_SensorConfig).readUom,
-			value: this._env.temperatureModel.getValue()
+			value: this._env.humidityModel.getValue()
 		}
 	}
 }

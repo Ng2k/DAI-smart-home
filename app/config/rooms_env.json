@@ -7,6 +7,14 @@
 			"coolingRate": 0.1,
 			"thermalInertia": 0.5,
 			"noiseAmplitude": 0.05
+		},
+		"humidity": {
+			"initialHumidity": 45,
+			"ambientHumidity": 50,
+			"dehumidifyingRate": 0.10,
+			"humidityRiseRate": 0.02,
+			"thermalInteraction": 0.6,
+			"noiseAmplitude": 0.3
 		}
 	}
 }

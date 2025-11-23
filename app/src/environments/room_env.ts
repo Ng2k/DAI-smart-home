@@ -3,7 +3,7 @@
  * @file room_env.ts
  * @author Nicola Guerra
  */
-import { TemperatureModel, } from "./models/";
+import { TemperatureModel, HumidityModel } from "./models/";
 
 /**
  * @brief Class for handling room environments
@@ -11,7 +11,8 @@ import { TemperatureModel, } from "./models/";
  */
 export class RoomEnv {
 	constructor(
-		public readonly temperatureModel: TemperatureModel
+		public readonly temperatureModel: TemperatureModel,
+		public readonly humidityModel: HumidityModel,
 	) { }
 
 	// public methods --------------------------------------------------------------------------------
@@ -22,5 +23,6 @@ export class RoomEnv {
 	 */
 	public update(dt: number): void {
 		this.temperatureModel.update(dt);
+		this.humidityModel.update(dt);
 	}
 }

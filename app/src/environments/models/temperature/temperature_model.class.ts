@@ -4,7 +4,7 @@
  * @author Nicola Guerra
  */
 import type { TemperatureModelConfig } from "./temperature_config.type.ts";
-import type { IModel } from "./model.interface.ts";
+import type { IModel } from "../model.interface.ts";
 
 /**
  * @brief class for the temperature Model
@@ -19,13 +19,9 @@ export class TemperatureModel implements IModel {
 	}
 
 	//public methods ---------------------------------------------------------------------------------
-	/**
-	 * @brief Set the value of the heaterOn property
-	 * @param value {boolean} new value for the property
-	 * @return void
-	 */
-	public setHeaterState(value: boolean): void {
-		this.heaterOn = value;
+
+	public setState(state: boolean): void {
+		this.heaterOn = state;
 	}
 
 	public getValue(): number {

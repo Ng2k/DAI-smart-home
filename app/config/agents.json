@@ -16,6 +16,13 @@
 					"frequency": 2,
 					"frequencyUom": "sec",
 					"topic": "home/floor/1/room/living-room/sensors/temperature"
+				},
+				{
+					"type": "humidity",
+					"readUom": "%",
+					"frequency": 2,
+					"frequencyUom": "sec",
+					"topic": "home/floor/1/room/living-room/sensors/humidity"
 				}
 			],
 			"actuators": [
@@ -24,6 +31,13 @@
 					"topic": {
 						"publish": "home/floor/1/room/living-room/actuators/heater",
 						"subscribe": "home/floor/1/room/living-room/controllers/temperature"
+					}
+				},
+				{
+					"type": "dehumidifier",
+					"topic": {
+						"publish": "home/floor/1/room/living-room/actuators/dehumidifier",
+						"subscribe": "home/floor/1/room/living-room/controllers/humidity"
 					}
 				}
 			],
@@ -34,6 +48,14 @@
 					"topic": {
 						"publish": "home/floor/1/room/living-room/controllers/temperature",
 						"subscribe": "home/floor/1/room/living-room/sensors/temperature"
+					}
+				},
+				{
+					"type": "humidity",
+					"logic": "PID",
+					"topic": {
+						"publish": "home/floor/1/room/living-room/controllers/humidity",
+						"subscribe": "home/floor/1/room/living-room/sensors/humidity"
 					}
 				}
 			]

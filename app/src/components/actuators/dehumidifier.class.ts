@@ -1,17 +1,17 @@
 /**
- * @brief Actuator for the heater
- * @file heater.class.ts
+ * @brief Actuator for the dehumidifier
+ * @file dehumidifier.class.ts
  * @author Nicola Guerra
  */
 import { logger, type Logger, type T_ActuatorConfig, type T_MqttConfig } from "../../utils"
 import { Actuator } from "./actuator.abstract";
 
-export class HeaterActuator extends Actuator {
+export class dehumidifierActuator extends Actuator {
 	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
 	constructor(config: T_ActuatorConfig, mqttConfig: T_MqttConfig) {
 		super(config, mqttConfig)
-		this._logger.info({}, 'Heater actuator initialized.')
+		this._logger.info({}, 'Dehumidifier actuator initialized.')
 	}
 
 	// protected methods ---------------------------------------------------------------------------
@@ -22,7 +22,7 @@ export class HeaterActuator extends Actuator {
 	 * @returns void
 	 */
 	protected _onMessage(topic: string, message: string): void {
-		const { heater: value } = JSON.parse(message);
+		const { dehumidifier: value } = JSON.parse(message);
 		const { room, type } = this._config;
 		this._logger.debug({ topic, value }, `Message received from controller`);
 
@@ -36,4 +36,5 @@ export class HeaterActuator extends Actuator {
 		)
 	}
 }
+
 

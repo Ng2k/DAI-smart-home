@@ -20,6 +20,7 @@ export enum AgentType {
  */
 export enum SensorType {
 	TEMPERATURE = "temperature",
+	HUMIDITY = "humidity",
 }
 
 /**
@@ -46,6 +47,7 @@ export enum Topics {
 	REGISTRY_AGENTS = "home/registry/agents",
 	REGISTRY_AGENTS_ACK = "home/registry/agents/ack",
 	ACTUATOR_HEATER_ACK = "home/floor/1/room/living-room/actuators/heater",
+	ACTUATOR_DEHUMIDIFIER_ACK = "home/floor/1/room/living-room/actuators/dehumidifier",
 }
 
 /**
@@ -67,5 +69,4 @@ export enum Uom {
 	VOLTS = "V",
 	AMPS = "A",
 	OHMS = "Ω",
-
 }

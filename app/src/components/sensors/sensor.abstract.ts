@@ -29,6 +29,7 @@ export abstract class Sensor extends Component {
 		setInterval(() => {
 			const payload = this._run();
 			this._mqttClient.publish(topic, JSON.stringify(payload));
+			this._logger.info({ payload }, "Published sensor value");
 		}, frequencyConverted);
 	}
 

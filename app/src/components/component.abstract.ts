@@ -8,11 +8,12 @@ import { randomUUID } from "crypto";
 import mqtt, { type MqttClient } from "mqtt";
 
 import { TimeUom } from "../utils";
-import type { T_MqttConfig } from "../utils";
+import type { Logger, T_MqttConfig } from "../utils";
 
 import type { IComponent } from "./component.interface";
 
 export abstract class Component implements IComponent {
+	protected abstract _logger: Logger;
 	protected readonly _id: string = randomUUID();
 	protected readonly _mqttClient: MqttClient;
 	protected readonly _timeUom: TimeUom = new TimeUom();

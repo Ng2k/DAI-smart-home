@@ -4,12 +4,11 @@
  * @author Nicola Guerra
  */
 import { randomUUID } from "crypto";
-import { basename } from "path";
 
 import mqtt, { type MqttClient } from "mqtt";
 
 import { TimeUom } from "../utils";
-import type { T_ComponentConfig, T_MqttConfig } from "../utils";
+import type { T_MqttConfig } from "../utils";
 
 import type { IComponent } from "./component.interface";
 
@@ -18,7 +17,7 @@ export abstract class Component implements IComponent {
 	protected readonly _mqttClient: MqttClient;
 	protected readonly _timeUom: TimeUom = new TimeUom();
 
-	constructor(protected readonly _config: T_ComponentConfig, _mqttConfigs: T_MqttConfig) {
+	constructor(_mqttConfigs: T_MqttConfig) {
 		this._mqttClient = mqtt.connect(_mqttConfigs.url, {
 			username: _mqttConfigs.username,
 			password: _mqttConfigs.password

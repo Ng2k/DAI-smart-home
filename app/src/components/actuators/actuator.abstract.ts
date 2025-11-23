@@ -8,10 +8,10 @@ import type { T_ActuatorConfig, T_MqttConfig } from "../../utils";
 
 export abstract class Actuator extends Component {
 	constructor(
-		protected override readonly _config: T_ActuatorConfig,
+		protected readonly _config: T_ActuatorConfig,
 		_mqttConfigs: T_MqttConfig,
 	) {
-		super(_config, _mqttConfigs);
+		super(_mqttConfigs);
 	}
 
 	// public methods ------------------------------------------------------------------------------

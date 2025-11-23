@@ -10,6 +10,7 @@ import {
 	Sensor, TemperatureSensor,
 } from "../components";
 import { ActuatorType, ControllerType, SensorType } from "./enums";
+import { type IModel, TemperatureModel } from "../environments";
 
 /**
  * @brief Controller type to class mapping
@@ -28,9 +29,18 @@ export const sensorTypeToClassMapping: Record<string, new (...args: any[]) => Se
 };
 
 /**
- * @brief Actuator type to class mapping
- * @type T_ActuatorTypeToClassMapping
+ * @brief actuator type to class mapping
+ * @type t_actuatortypetoclassmapping
  */
 export const actuatorTypeToClassMapping: Record<string, new (...args: any[]) => Actuator> = {
 	[ActuatorType.HEATER]: HeaterActuator,
 };
+
+/**
+ * @brief env models type to class mapping
+ * @type t_envtypetoclassmapping
+ */
+
+export const envTypeToClassMapping: Record<string, new (...args: any[]) => IModel> = {
+	[SensorType.TEMPERATURE]: TemperatureModel
+}

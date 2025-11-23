@@ -12,10 +12,10 @@ import { Component } from "../component.abstract";
  */
 export abstract class Controller extends Component {
 	constructor(
-		protected override readonly _config: T_ControllerConfig,
+		protected readonly _config: T_ControllerConfig,
 		_mqttConfigs: T_MqttConfig,
 	) {
-		super(_config, _mqttConfigs);
+		super(_mqttConfigs);
 	}
 
 	// public methods ------------------------------------------------------------------------------

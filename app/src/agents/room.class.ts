@@ -8,11 +8,14 @@ import {
 	logger,
 	Topics,
 	controllerTypeToClassMapping,
+	envTypeToClassMapping,
 	sensorTypeToClassMapping,
 	actuatorTypeToClassMapping
 } from "../utils";
 import type { Logger, T_MqttConfig, T_RoomAgentConfig, } from "../utils";
 import { Controller, Sensor, Actuator } from "../components";
+import { type TemperatureModelConfig,
+	RoomEnv, TemperatureModel } from "../environments";
 
 /**
  * @brief Room agent class
@@ -20,22 +23,34 @@ import { Controller, Sensor, Actuator } from "../components";
  */
 export class RoomAgent extends Agent {
 	private _isRegistered: boolean = false;
+	private _roomEnv: RoomEnv;
 
 	protected readonly _sensors: Sensor[] = [];
 	protected readonly _actuators: Actuator[] = [];
 	protected readonly _controllers: Controller[] = [];
 	protected override readonly _logger: Logger = logger.child({ name: this.constructor.name });
-	protected override readonly  _topicToFunctionMap: Record<string, (message: string) => void> = {
+	protected override readonly _topicToFunctionMap: Record<string, (message: string) => void> = {
 		[Topics.REGISTRY_AGENTS_ACK]: this._handleRegistrationAck.bind(this),
 	};
 
-	constructor(agentConfig: T_RoomAgentConfig, mqttConfigs: T_MqttConfig) {
+	constructor(
+		agentConfig: T_RoomAgentConfig,
+		mqttConfigs: T_MqttConfig,
+		roomEnvConfig: Record<string, any>
+	) {
 		super(agentConfig, mqttConfigs);
+
+		this._roomEnv = new RoomEnv(
+			new TemperatureModel(roomEnvConfig.temperature as TemperatureModelConfig)
+		);
+
 		this._subscribeToTopics();
 		this._registerAgent();
 		this._initializeSensors();
 		this._initializeControllers();
 		this._initializeActuators();
+
+		this._startEnvLoop();
 
 		this._logger.info(`${agentConfig.name} agent initialized`);
 	}
@@ -78,14 +93,16 @@ export class RoomAgent extends Agent {
 		sensors.map((sensor) => {
 			const type = sensor.type
 			const SensorClass = sensorTypeToClassMapping[type];
-			if(!SensorClass) {
+			if (!SensorClass) {
 				this._logger.error({ type }, `Unknown sensor type: ${type}`);
 				return;
 			}
 			const sensorInstance = new SensorClass(
 				{ ...sensor, room: this.agentConfig.name },
-				this.mqttConfigs
+				this.mqttConfigs,
+				this._roomEnv
 			);
+
 			this._sensors.push(sensorInstance);
 		});
 		this._logger.info(`Sensors initialized`);
@@ -100,7 +117,7 @@ export class RoomAgent extends Agent {
 		actuators.map((actuator) => {
 			const type = actuator.type
 			const ActuatorClass = actuatorTypeToClassMapping[type];
-			if(!ActuatorClass) {
+			if (!ActuatorClass) {
 				this._logger.error({ type }, `Unknown actuator type: ${type}`);
 				return;
 			}
@@ -155,5 +172,14 @@ export class RoomAgent extends Agent {
 		}
 		this._logger.info({ message }, 'Registration acknowledged by the registry');
 		this._isRegistered = true;
+	}
+	/**
+	 * @brief Start the simulation for all the sensors
+	 * @return void
+	 */
+	private _startEnvLoop(): void {
+		setInterval(() => {
+			this._roomEnv.update(1);
+		}, 1000);
 	}
 }

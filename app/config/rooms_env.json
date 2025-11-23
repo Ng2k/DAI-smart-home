@@ -1,0 +1,12 @@
+{
+	"f1-living-room": {
+		"temperature": {
+			"initialTemperature": 20.00,
+			"ambientTemperature": 15.00,
+			"heatingRate": 0.2,
+			"coolingRate": 0.1,
+			"thermalInertia": 0.5,
+			"noiseAmplitude": 0.05
+		}
+	}
+}

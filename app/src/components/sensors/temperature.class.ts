@@ -6,6 +6,7 @@
 import { logger } from "../../utils";
 import type { Logger, T_MqttConfig, T_SensorConfig } from "../../utils";
 import { Sensor } from "./sensor.abstract";
+import type { RoomEnv } from "../../environments";
 
 /**
  * @brief Sensor class
@@ -14,8 +15,8 @@ import { Sensor } from "./sensor.abstract";
 export class TemperatureSensor extends Sensor {
 	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
-	constructor(config: T_SensorConfig, mqttConfig: T_MqttConfig) {
-		super(config, mqttConfig);
+	constructor(config: T_SensorConfig, mqttConfig: T_MqttConfig, env: RoomEnv) {
+		super(config, mqttConfig, env);
 		this._logger.info({}, 'Sensor Initialized.')
 	}
 
@@ -28,10 +29,13 @@ export class TemperatureSensor extends Sensor {
 			'Starting sensor'
 		)
 		super.start();
-		this._logger.info({
-			room: this._config.room,
-			type: this._config.type
-		}, 'Finish sensor operations');
+		this._logger.info(
+			{
+				room: this._config.room,
+				type: this._config.type
+			},
+			'Finish sensor operations'
+		);
 	}
 
 	public override stop(): void {
@@ -47,7 +51,7 @@ export class TemperatureSensor extends Sensor {
 		return {
 			id: this._id,
 			uom: (this._config as T_SensorConfig).readUom,
-			value: Number(Math.random() * 100).toFixed(2)
+			value: this._env.temperatureModel.getValue()
 		}
 	}
 }

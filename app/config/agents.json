@@ -9,6 +9,14 @@
 		{
 			"name": "f1-living-room",
 			"type": "room",
+			"orchestrator": {
+				"name": "room-orchestrator",
+				"type": "orchestrator",
+				"topic": {
+					"subscribe": [],
+					"publish": []
+				}
+			},
 			"sensors": [
 				{
 					"type": "temperature",
@@ -56,13 +64,6 @@
 					"topic": {
 						"publish": "home/floor/1/room/living-room/controllers/humidity",
 						"subscribe": "home/floor/1/room/living-room/sensors/humidity"
-					}
-				},
-				{
-					"type": "room",
-					"topic": {
-						"publish": "",
-						"subscribe": ""
 					}
 				}
 			]

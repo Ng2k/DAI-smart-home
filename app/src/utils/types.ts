@@ -28,10 +28,21 @@ export type RegistryAgentConfig = {
 export type RoomAgentConfig = {
 	name: string;
 	type: AgentType;
+	orchestrator: OrchestratorConfig;
 	sensors: SensorConfig[];
 	actuators: ActuatorConfig[];
 	controllers: ControllerConfig[];
 };
+
+/**
+ * @brief Orchestrator configuration type
+ * @type OrchestratorConfig
+ */
+export type OrchestratorConfig = {
+	name: string;
+	type: string;
+	topics: Record<string, []>;
+}
 
 /**
  * @brief Sensor configuration type

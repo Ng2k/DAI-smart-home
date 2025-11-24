@@ -3,8 +3,8 @@
  * @file room.class.ts
  * @author Nicola Guerra
  */
-import { Controller } from "./controller.abstract";
-import { logger, type Logger, type ControllerConfig, MqttConfig } from "../../utils/";
+import { logger, MqttConfig, type Logger, type OrchestratorConfig } from "../../utils/";
+import type { Controller } from "..";
 
 /**
  * @brief Orchestrator for the controllers of a room

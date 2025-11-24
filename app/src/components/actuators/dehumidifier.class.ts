@@ -6,7 +6,7 @@
 import { logger, type Logger, type T_ActuatorConfig, type T_MqttConfig } from "../../utils"
 import { Actuator } from "./actuator.abstract";
 
-export class dehumidifierActuator extends Actuator {
+export class DehumidifierActuator extends Actuator {
 	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
 	constructor(config: T_ActuatorConfig, mqttConfig: T_MqttConfig) {
@@ -36,5 +36,6 @@ export class dehumidifierActuator extends Actuator {
 		)
 	}
 }
+
 
 

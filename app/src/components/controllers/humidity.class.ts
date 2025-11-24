@@ -35,7 +35,11 @@ export class HumidityController extends Controller {
 		const { value } = payload;
 		const { topic: { publish } } = this._config;
 
-		const newState = (value > 47.5) ? true : false;
+		const isDry = (value <= 35.00);
+		const isHumid = (value >= 50);
+		let newState = this._dehumidifierState;
+		if (isDry || isHumid) newState = !this._dehumidifierState;
+
 		if (newState === this._dehumidifierState) return;
 
 		this._dehumidifierState = newState;

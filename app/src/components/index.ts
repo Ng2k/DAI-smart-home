@@ -1,3 +1,3 @@
-export { Sensor, TemperatureSensor } from "./sensors";
-export { Controller, TemperatureController } from "./controllers";
-export { Actuator, HeaterActuator } from "./actuators";
+export * from "./sensors";
+export * from "./controllers";
+export * from "./actuators";

@@ -28,7 +28,8 @@ export enum SensorType {
  * @enum ActuatorType
  */
 export enum ActuatorType {
-	HEATER = "heater"
+	HEATER = "heater",
+	DEHUMIDIFIER = "dehumidifier",
 }
 
 /**
@@ -37,6 +38,7 @@ export enum ActuatorType {
  */
 export enum ControllerType {
 	TEMPERATURE = "temperature",
+	HUMIDITY = "humidity",
 }
 
 /**

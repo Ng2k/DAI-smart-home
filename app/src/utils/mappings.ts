@@ -5,13 +5,12 @@
  */
 
 import {
-	Actuator, HeaterActuator,
-	Controller, TemperatureController,
-	Sensor, TemperatureSensor,
+	Actuator, HeaterActuator, DehumidifierActuator,
+	Controller, TemperatureController, HumidityController,
+	Sensor, TemperatureSensor, HumiditySensor,
 } from "../components";
 import { ActuatorType, ControllerType, SensorType } from "./enums";
 import { type IModel, TemperatureModel } from "../environments";
-import { HumiditySensor } from "../components/sensors/humidity.class";
 
 /**
  * @brief Controller type to class mapping
@@ -19,6 +18,7 @@ import { HumiditySensor } from "../components/sensors/humidity.class";
  */
 export const controllerTypeToClassMapping: Record<string, new (...args: any[]) => Controller> = {
 	[ControllerType.TEMPERATURE]: TemperatureController,
+	[ControllerType.HUMIDITY]: HumidityController,
 };
 
 /**
@@ -36,6 +36,7 @@ export const sensorTypeToClassMapping: Record<string, new (...args: any[]) => Se
  */
 export const actuatorTypeToClassMapping: Record<string, new (...args: any[]) => Actuator> = {
 	[ActuatorType.HEATER]: HeaterActuator,
+	[ActuatorType.DEHUMIDIFIER]: DehumidifierActuator,
 };
 
 /**

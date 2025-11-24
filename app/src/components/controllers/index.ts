@@ -1,3 +1,6 @@
-export { Controller } from "./controller.abstract";
-export { TemperatureController } from "./temperature.class";
+export * from "./controller.abstract";
+export * from "./temperature.class";
+export * from "./humidity.class";
+
+
 

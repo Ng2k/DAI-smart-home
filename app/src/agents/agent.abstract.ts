@@ -81,7 +81,7 @@ export abstract class Agent implements IAgent {
 			if (!functionToCall) return;
 
 			functionToCall(payload);
-			this._logger.info({ payload }, 'Operation for the topic completed successfully');
+			this._logger.info({ payload: JSON.parse(payload) }, 'Operation for the topic completed successfully');
 		});
 	}
 }

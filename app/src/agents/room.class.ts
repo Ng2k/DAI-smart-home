@@ -99,7 +99,10 @@ export class RoomAgent extends Agent {
 
 		const payload = JSON.stringify(this.toJSON());
 		this._mqttClient.publish(Topics.REGISTRY_AGENTS, payload);
-		this._logger.debug({ payload, topic: Topics.REGISTRY_AGENTS }, 'Requesting registration');
+		this._logger.debug(
+			{ payload: JSON.parse(payload), topic: Topics.REGISTRY_AGENTS },
+			'Requesting registration'
+		);
 	}
 	/**
 	 * @brief Initialize the sensors
@@ -219,7 +222,7 @@ export class RoomAgent extends Agent {
 			return;
 		}
 
-		this._roomEnv.dehumidifierModel.setState(value);
+		this._roomEnv.humidityModel.setState(value);
 	}
 	/**
 	 * @brief Start the simulation for all the sensors

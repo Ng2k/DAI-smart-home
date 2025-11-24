@@ -5,7 +5,7 @@
  */
 import mqtt, { type MqttClient } from "mqtt";
 
-import type { Logger, T_AgentConfig, T_MqttConfig } from "../utils"
+import type { Logger, AgentConfig, MqttConfig } from "../utils"
 import type { IAgent } from "./agent.interface";
 
 /**
@@ -19,8 +19,8 @@ export abstract class Agent implements IAgent {
 	protected abstract readonly _logger: Logger;
 
 	constructor(
-		public readonly agentConfig: T_AgentConfig,
-		protected readonly mqttConfigs: T_MqttConfig
+		public readonly agentConfig: AgentConfig,
+		protected readonly mqttConfigs: MqttConfig
 	) {
 		this._mqttClient = mqtt.connect(mqttConfigs.url, {
 			username: mqttConfigs.username,

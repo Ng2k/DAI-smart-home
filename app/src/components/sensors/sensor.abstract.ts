@@ -3,7 +3,7 @@
  * @brief Abstract class for sensors
  * @author Nicola Guerra
  */
-import type { T_MqttConfig, T_SensorConfig } from "../../utils";
+import { MqttConfig, type SensorConfig } from "../../utils";
 import { Component } from "../component.abstract";
 import { RoomEnv } from "../../environments";
 
@@ -13,8 +13,8 @@ import { RoomEnv } from "../../environments";
  */
 export abstract class Sensor extends Component {
 	constructor(
-		protected readonly _config: T_SensorConfig,
-		_mqttConfigs: T_MqttConfig,
+		protected readonly _config: SensorConfig,
+		_mqttConfigs: MqttConfig,
 		protected readonly _env: RoomEnv
 	) {
 		super(_mqttConfigs);

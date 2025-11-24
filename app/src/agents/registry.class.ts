@@ -3,7 +3,7 @@
  * @file registry.class.ts
  * @author Nicola Guerra
  */
-import { logger, Topics, type Logger, type T_MqttConfig, type T_RegistryAgentConfig } from "../utils";
+import { logger, Topics, MqttConfig, type Logger, type RegistryAgentConfig } from "../utils";
 import { Agent } from "./agent.abstract";
 
 /**
@@ -18,7 +18,7 @@ export class RegistryAgent extends Agent {
 	};
 	protected override readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
-	constructor(agentConfig: T_RegistryAgentConfig, mqttConfigs: T_MqttConfig) {
+	constructor(agentConfig: RegistryAgentConfig, mqttConfigs: MqttConfig) {
 		super(agentConfig, mqttConfigs);
 		this._subscribeToTopics();
 		this._logger.info(`${agentConfig.name} agent initialized`);

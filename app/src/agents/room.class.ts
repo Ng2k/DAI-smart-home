@@ -6,12 +6,13 @@
 import { Agent } from "./agent.abstract";
 import {
 	logger,
+	MqttConfig,
 	Topics,
 	controllerTypeToClassMapping,
 	sensorTypeToClassMapping,
 	actuatorTypeToClassMapping,
 } from "../utils";
-import type { Logger, T_MqttConfig, T_RoomAgentConfig, } from "../utils";
+import type { Logger, RoomAgentConfig, } from "../utils";
 import { Controller, Sensor, Actuator } from "../components";
 import {
 	type HumidityModelConfig,
@@ -40,8 +41,8 @@ export class RoomAgent extends Agent {
 	};
 
 	constructor(
-		agentConfig: T_RoomAgentConfig,
-		mqttConfigs: T_MqttConfig,
+		agentConfig: RoomAgentConfig,
+		mqttConfigs: MqttConfig,
 		roomEnvConfig: Record<string, any>
 	) {
 		super(agentConfig, mqttConfigs);
@@ -110,7 +111,7 @@ export class RoomAgent extends Agent {
 	 * @returns void
 	 */
 	private _initializeSensors(): void {
-		const { sensors } = this.agentConfig as T_RoomAgentConfig;
+		const { sensors } = this.agentConfig as RoomAgentConfig;
 		sensors.map((sensor) => {
 			const type = sensor.type
 			const SensorClass = sensorTypeToClassMapping[type];
@@ -134,7 +135,7 @@ export class RoomAgent extends Agent {
 	 * @returns void
 	 */
 	private _initializeActuators(): void {
-		const { actuators } = this.agentConfig as T_RoomAgentConfig;
+		const { actuators } = this.agentConfig as RoomAgentConfig;
 		actuators.map((actuator) => {
 			const type = actuator.type
 			const ActuatorClass = actuatorTypeToClassMapping[type];
@@ -156,7 +157,7 @@ export class RoomAgent extends Agent {
 	 * @returns void
 	 */
 	private _initializeControllers(): void {
-		const { controllers } = this.agentConfig as T_RoomAgentConfig;
+		const { controllers } = this.agentConfig as RoomAgentConfig;
 		controllers.map((controller) => {
 			const type = controller.type;
 			const ControllerClass = controllerTypeToClassMapping[type];

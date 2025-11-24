@@ -4,7 +4,7 @@
  * @author Nicola Guerra
  */
 import { Controller } from "./controller.abstract";
-import type { Logger, T_ControllerConfig, T_MqttConfig } from "../../utils";
+import { type Logger, type ControllerConfig, MqttConfig } from "../../utils";
 import { logger } from "../../utils";
 
 /**
@@ -15,7 +15,7 @@ export class HumidityController extends Controller {
 	protected override readonly _logger: Logger = logger.child({ name: this.constructor.name });
 	private _dehumidifierState: boolean = false;
 
-	constructor(config: T_ControllerConfig, mqttConfig: T_MqttConfig) {
+	constructor(config: ControllerConfig, mqttConfig: MqttConfig) {
 		super(config, mqttConfig);
 		this._logger.info({ config }, "Humidity controller initialized");
 	}

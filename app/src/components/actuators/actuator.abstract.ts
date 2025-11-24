@@ -4,12 +4,12 @@
  * @author Nicola Guerra
  */
 import { Component } from "../component.abstract";
-import type { T_ActuatorConfig, T_MqttConfig } from "../../utils";
+import { MqttConfig, type ActuatorConfig } from "../../utils";
 
 export abstract class Actuator extends Component {
 	constructor(
-		protected readonly _config: T_ActuatorConfig,
-		_mqttConfigs: T_MqttConfig,
+		protected readonly _config: ActuatorConfig,
+		_mqttConfigs: MqttConfig,
 	) {
 		super(_mqttConfigs);
 
@@ -51,4 +51,13 @@ export abstract class Actuator extends Component {
 		this._mqttClient.unsubscribe(subscribe);
 		this._logger.info(`Actuator '${room}/${type}' stopped`);
 	}
+
+	// protected methods -----------------------------------------------------------------------------
+	/**
+	 * @brief Handle the message received from the controller topic
+	 * @param topic The topic of the message received from the controller topic
+	 * @param message The message received from the controller topic
+	 * @returns void
+	 */
+	protected abstract _onMessage(topic: string, message: string): void;
 }

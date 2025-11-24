@@ -4,7 +4,7 @@
  * @author Nicola Guerra
  */
 import { Sensor } from "./sensor.abstract.ts";
-import type { Logger, T_SensorConfig, T_MqttConfig } from "../../utils/";
+import type { Logger, SensorConfig, MqttConfig } from "../../utils/";
 import { logger } from "../../utils/";
 import { RoomEnv } from "../../environments/";
 
@@ -15,7 +15,7 @@ import { RoomEnv } from "../../environments/";
 export class HumiditySensor extends Sensor {
 	protected override readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
-	constructor(config: T_SensorConfig, mqttConfig: T_MqttConfig, env: RoomEnv) {
+	constructor(config: SensorConfig, mqttConfig: MqttConfig, env: RoomEnv) {
 		super(config, mqttConfig, env);
 		this._logger.info({}, 'Sensor Initialized.')
 	}
@@ -53,7 +53,7 @@ export class HumiditySensor extends Sensor {
 	protected _run(): Record<string, any> {
 		return {
 			id: this._id,
-			uom: (this._config as T_SensorConfig).readUom,
+			uom: (this._config as SensorConfig).readUom,
 			value: this._env.humidityModel.getValue()
 		}
 	}

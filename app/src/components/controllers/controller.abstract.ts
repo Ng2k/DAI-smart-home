@@ -3,7 +3,7 @@
  * @file controller.abstract.ts
  * @author Nicola Guerra
  */
-import type { T_ControllerConfig, T_MqttConfig } from "../../utils";
+import { type ControllerConfig, MqttConfig } from "../../utils";
 import { Component } from "../component.abstract";
 
 /**
@@ -12,8 +12,8 @@ import { Component } from "../component.abstract";
  */
 export abstract class Controller extends Component {
 	constructor(
-		protected readonly _config: T_ControllerConfig,
-		_mqttConfigs: T_MqttConfig,
+		protected readonly _config: ControllerConfig,
+		_mqttConfigs: MqttConfig,
 	) {
 		super(_mqttConfigs);
 

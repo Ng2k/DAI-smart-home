@@ -7,47 +7,37 @@
 import type { AgentType, SensorType, Uom, ControllerType, ActuatorType } from "./enums";
 
 /**
- * @brief MQTT configuration type
- * @type T_MqttConfig
- */
-export type T_MqttConfig = {
-	url: string;
-	username: string;
-	password: string;
-};
-
-/**
  * @brief Agent configuration type
- * @type T_AgentConfig
+ * @type AgentConfig
  */
-export type T_AgentConfig = T_RegistryAgentConfig | T_RoomAgentConfig;
+export type AgentConfig = RegistryAgentConfig | RoomAgentConfig;
 
 /**
  * @brief Registry agent configuration type
- * @type T_RegistryAgentConfig
+ * @type RegistryAgentConfig
  */
-export type T_RegistryAgentConfig = {
+export type RegistryAgentConfig = {
 	name: string;
 	type: AgentType;
 };
 
 /**
  * @brief Room agent configuration type
- * @type T_RoomAgentConfig
+ * @type RoomAgentConfig
  */
-export type T_RoomAgentConfig = {
+export type RoomAgentConfig = {
 	name: string;
 	type: AgentType;
-	sensors: T_SensorConfig[];
-	actuators: T_ActuatorConfig[];
-	controllers: T_ControllerConfig[];
+	sensors: SensorConfig[];
+	actuators: ActuatorConfig[];
+	controllers: ControllerConfig[];
 };
 
 /**
  * @brief Sensor configuration type
- * @type T_SensorConfig
+ * @type SensorConfig
  */
-export type T_SensorConfig = {
+export type SensorConfig = {
 	room: string;
 	type: SensorType;
 	readUom: Uom;
@@ -58,9 +48,9 @@ export type T_SensorConfig = {
 
 /**
  * @brief Controller configuration type
- * @type T_ControllerConfig
+ * @type ControllerConfig
  */
-export type T_ControllerConfig = {
+export type ControllerConfig = {
 	room: string;
 	type: ControllerType;
 	logic: string;
@@ -72,9 +62,9 @@ export type T_ControllerConfig = {
 
 /**
  * @brief Actuator configuration type
- * @type T_ActuatorConfig
+ * @type ActuatorConfig
  */
-export type T_ActuatorConfig = {
+export type ActuatorConfig = {
 	room: string;
 	type: ActuatorType;
 	topic: {
@@ -85,8 +75,6 @@ export type T_ActuatorConfig = {
 
 /**
  * @brief Component configuration type
- * @type T_ComponentConfig
+ * @type ComponentConfig
  */
-export type T_ComponentConfig = T_SensorConfig | T_ActuatorConfig | T_ControllerConfig;
-
-
+export type ComponentConfig = SensorConfig | ActuatorConfig | ControllerConfig;

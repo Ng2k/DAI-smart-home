@@ -3,8 +3,7 @@
  * @file sensor.class.ts
  * @author Nicola Guerra
  */
-import { logger } from "../../utils";
-import type { Logger, T_MqttConfig, T_SensorConfig } from "../../utils";
+import { logger, MqttConfig, type Logger, type SensorConfig } from "../../utils";
 import { Sensor } from "./sensor.abstract";
 import type { RoomEnv } from "../../environments";
 
@@ -15,7 +14,7 @@ import type { RoomEnv } from "../../environments";
 export class TemperatureSensor extends Sensor {
 	protected override readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
-	constructor(config: T_SensorConfig, mqttConfig: T_MqttConfig, env: RoomEnv) {
+	constructor(config: SensorConfig, mqttConfig: MqttConfig, env: RoomEnv) {
 		super(config, mqttConfig, env);
 		this._logger.info({}, 'Sensor Initialized.')
 	}
@@ -51,7 +50,7 @@ export class TemperatureSensor extends Sensor {
 	protected _run(): Record<string, any> {
 		return {
 			id: this._id,
-			uom: (this._config as T_SensorConfig).readUom,
+			uom: (this._config as SensorConfig).readUom,
 			value: this._env.temperatureModel.getValue()
 		}
 	}

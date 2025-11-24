@@ -3,13 +3,13 @@
  * @file dehumidifier.class.ts
  * @author Nicola Guerra
  */
-import { logger, type Logger, type T_ActuatorConfig, type T_MqttConfig } from "../../utils"
+import { logger, MqttConfig, type Logger, type ActuatorConfig } from "../../utils"
 import { Actuator } from "./actuator.abstract";
 
 export class DehumidifierActuator extends Actuator {
 	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
-	constructor(config: T_ActuatorConfig, mqttConfig: T_MqttConfig) {
+	constructor(config: ActuatorConfig, mqttConfig: MqttConfig) {
 		super(config, mqttConfig)
 		this._logger.info({}, 'Dehumidifier actuator initialized.')
 	}
@@ -36,6 +36,3 @@ export class DehumidifierActuator extends Actuator {
 		)
 	}
 }
-
-
-

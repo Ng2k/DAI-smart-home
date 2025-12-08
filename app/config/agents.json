@@ -13,8 +13,8 @@
 				"name": "room-orchestrator",
 				"type": "orchestrator",
 				"topic": {
-					"subscribe": [],
-					"publish": []
+					"subscribe": ["test"],
+					"publish": ["test"]
 				}
 			},
 			"sensors": [

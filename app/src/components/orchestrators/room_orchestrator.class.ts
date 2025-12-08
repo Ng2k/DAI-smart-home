@@ -7,17 +7,17 @@ import { logger, MqttConfig, type Logger, type OrchestratorConfig } from "../../
 import type { Controller } from "..";
 
 /**
- * @brief Orchestrator for the controllers of a room
- * @class RoomController
+ * @brief Orchestrator for the room
+ * @class RoomOrchestrator
  */
 export class RoomOrchestrator {
 	private _controllers: Controller[] = [];
 	private readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
 	constructor(config: OrchestratorConfig, mqttConfig: MqttConfig) {
-		this._logger.info({ config }, "Room controller initialized");
+		this._logger.info({ config }, "Room orchestrator initialized");
 	}
 
-	// public methods --------------------------------------------------------------------------------
-	// private methods -------------------------------------------------------------------------------
+	// public methods ------------------------------------------------------------------------------
+	// private methods -----------------------------------------------------------------------------
 }

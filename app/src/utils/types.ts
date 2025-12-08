@@ -39,9 +39,10 @@ export type RoomAgentConfig = {
  * @type OrchestratorConfig
  */
 export type OrchestratorConfig = {
+	room?: string;
 	name: string;
 	type: string;
-	topics: Record<string, []>;
+	topic: Record<string, string[]>;
 }
 
 /**
@@ -49,7 +50,7 @@ export type OrchestratorConfig = {
  * @type SensorConfig
  */
 export type SensorConfig = {
-	room: string;
+	room?: string;
 	type: SensorType;
 	readUom: Uom;
 	frequency: number;
@@ -62,7 +63,7 @@ export type SensorConfig = {
  * @type ControllerConfig
  */
 export type ControllerConfig = {
-	room: string;
+	room?: string;
 	type: ControllerType;
 	logic: string;
 	topic: {
@@ -76,7 +77,7 @@ export type ControllerConfig = {
  * @type ActuatorConfig
  */
 export type ActuatorConfig = {
-	room: string;
+	room?: string;
 	type: ActuatorType;
 	topic: {
 		publish: string,

@@ -13,7 +13,7 @@ import {
 	actuatorTypeToClassMapping,
 } from "../utils";
 import type { Logger, RoomAgentConfig, } from "../utils";
-import { Controller, Sensor, Actuator } from "../components";
+import { Controller, Sensor, Actuator, RoomOrchestrator } from "../components";
 import {
 	type HumidityModelConfig,
 	type TemperatureModelConfig,
@@ -30,6 +30,7 @@ export class RoomAgent extends Agent {
 	private _isRegistered: boolean = false;
 	private _roomEnv: RoomEnv;
 
+	protected readonly _orchestrator: RoomOrchestrator;
 	protected readonly _sensors: Sensor[] = [];
 	protected readonly _actuators: Actuator[] = [];
 	protected readonly _controllers: Controller[] = [];
@@ -53,6 +54,11 @@ export class RoomAgent extends Agent {
 		);
 
 		this._registerAgent();
+		const { orchestrator } = this.agentConfig as RoomAgentConfig;
+		this._orchestrator = new RoomOrchestrator(
+			{ ...orchestrator, room: this.agentConfig.name },
+			mqttConfigs
+		);
 		this._initializeSensors();
 		this._initializeControllers();
 		this._initializeActuators();
@@ -105,6 +111,7 @@ export class RoomAgent extends Agent {
 			'Requesting registration'
 		);
 	}
+
 	/**
 	 * @brief Initialize the sensors
 	 * @details This method initializes the sensors

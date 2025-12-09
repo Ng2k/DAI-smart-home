@@ -1,0 +1,18 @@
+{
+	"rooms": {
+		"living-room": {
+			"objectives": {
+				"temperature": {
+					"min": 19,
+					"max": 23,
+					"target": 21
+				},
+				"humidity": {
+					"min": 40,
+					"max": 55,
+					"target": 45
+				}
+			}
+		}
+	}
+}

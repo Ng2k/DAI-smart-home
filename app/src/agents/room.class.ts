@@ -54,11 +54,13 @@ export class RoomAgent extends Agent {
 		);
 
 		this._registerAgent();
+
 		const { orchestrator } = this.agentConfig as RoomAgentConfig;
 		this._orchestrator = new RoomOrchestrator(
 			{ ...orchestrator, room: this.agentConfig.name },
 			mqttConfigs
 		);
+
 		this._initializeSensors();
 		this._initializeControllers();
 		this._initializeActuators();
@@ -71,11 +73,13 @@ export class RoomAgent extends Agent {
 
 	// public methods---------------------------------------------------------------------------------
 	public start(): void {
+		this._orchestrator.start();
 		this._sensors.forEach(sensor => sensor.start());
 		this._actuators.forEach(actuator => actuator.start());
 		this._controllers.forEach(controller => controller.start());
 	}
 	public stop(): void {
+		this._orchestrator.stop();
 		this._sensors.forEach(sensor => sensor.stop());
 		this._actuators.forEach(actuator => actuator.stop());
 		this._controllers.forEach(controller => controller.stop());

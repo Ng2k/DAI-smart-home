@@ -72,3 +72,9 @@ export enum Uom {
 	AMPS = "A",
 	OHMS = "Ω",
 }
+
+/**
+ * @brief Modalità di consumo energetico
+ * @enum EnergyMode
+ */
+export enum EnergyMode { ECO = "eco", COMFORT = "comfort" }

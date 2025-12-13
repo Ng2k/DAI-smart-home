@@ -12,9 +12,11 @@
 			"orchestrator": {
 				"name": "room-orchestrator",
 				"type": "orchestrator",
+				"energyMode": "eco",
 				"topic": {
 					"subscribe": [
-						"home/floor/1/room/living-room/sensors/+"
+						"home/floor/1/room/living-room/sensors/+",
+						"home/floor/1/room/living-room/actuators/+"
 					],
 					"publish": [
 						"test"

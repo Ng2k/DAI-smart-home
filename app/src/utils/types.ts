@@ -4,7 +4,7 @@
  * @author Nicola Guerra
  */
 
-import type { AgentType, SensorType, Uom, ControllerType, ActuatorType } from "./enums";
+import type { AgentType, SensorType, EnergyMode, Uom, ControllerType, ActuatorType } from "./enums";
 
 /**
  * @brief Agent configuration type
@@ -42,6 +42,7 @@ export type OrchestratorConfig = {
 	room?: string;
 	name: string;
 	type: string;
+	energyMode: EnergyMode;
 	topic: Record<string, string[]>;
 }
 
@@ -90,3 +91,9 @@ export type ActuatorConfig = {
  * @type ComponentConfig
  */
 export type ComponentConfig = SensorConfig | ActuatorConfig | ControllerConfig;
+
+/**
+ * @brief Type for the objectives
+ * @type Objectives
+ */
+export type Objectives = {};

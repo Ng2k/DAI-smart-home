@@ -39,11 +39,14 @@ export type RoomAgentConfig = {
  * @type OrchestratorConfig
  */
 export type OrchestratorConfig = {
-	room?: string;
+	room: string;
 	name: string;
 	type: string;
 	energyMode: EnergyMode;
-	topic: Record<string, string[]>;
+	topic: {
+		subscribe: string[];
+		publish: string;
+	};
 }
 
 /**
@@ -96,4 +99,20 @@ export type ComponentConfig = SensorConfig | ActuatorConfig | ControllerConfig;
  * @brief Type for the objectives
  * @type Objectives
  */
-export type Objectives = {};
+export type Objectives = {
+	rooms: {
+		"f1-living-room": {
+			energyMode: EnergyMode,
+			temperature: {
+				min: number,
+				max: number,
+				margin: number
+			},
+			humidity: {
+				min: number,
+				max: number,
+				margin: number
+			}
+		}
+	}
+};

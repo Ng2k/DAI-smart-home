@@ -1,17 +1,16 @@
 {
 	"rooms": {
-		"living-room": {
-			"objectives": {
-				"temperature": {
-					"min": 19,
-					"max": 23,
-					"target": 21
-				},
-				"humidity": {
-					"min": 40,
-					"max": 55,
-					"target": 45
-				}
+		"f1-living-room": {
+			"energyMode": "eco",
+			"temperature": {
+				"min": 20,
+				"max": 22,
+				"margin": 0.5
+			},
+			"humidity": {
+				"min": 40,
+				"max": 60,
+				"margin": 3
 			}
 		}
 	}

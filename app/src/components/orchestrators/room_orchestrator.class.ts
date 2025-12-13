@@ -4,10 +4,12 @@
  * @author Nicola Guerra
  */
 import {
+	type Objectives,
 	EnergyMode, logger, MqttConfig,
 	type Logger, type OrchestratorConfig
 } from "../../utils/";
 import { Component } from "../component.abstract";
+import objectives from "../../../config/objectives.json";
 
 type RoomState = {
 	temperature: number;
@@ -33,7 +35,13 @@ export class RoomOrchestrator extends Component {
 
 	constructor(private readonly _config: OrchestratorConfig, mqttConfig: MqttConfig) {
 		super(mqttConfig);
-		this._roomState.energyMode = _config.energyMode;
+		const key = _config.room as keyof Objectives["rooms"];
+		if (!key) {
+			this._logger.warn({ key }, "Key does not exist");
+			return;
+		}
+		const roomObj = objectives.rooms[key];
+		this._roomState.energyMode = roomObj.energyMode as EnergyMode;
 
 		this._mqttClient.subscribe(_config.topic.subscribe || []);
 		this._logger.debug(
@@ -76,7 +84,13 @@ export class RoomOrchestrator extends Component {
 					);
 			}
 
-			this._evaluate();
+			const msg = JSON.stringify(this._evaluate());
+			const pubTopic = this._config.topic.publish;
+			this._mqttClient.publish(pubTopic, msg);
+			this._logger.info(
+				{ topic: pubTopic, payload: JSON.parse(msg) },
+				"Pubblicato comandi orchestrazione stanza"
+			);
 		});
 	}
 	public stop(): void {
@@ -85,7 +99,84 @@ export class RoomOrchestrator extends Component {
 		this._logger.info(`Orchestrator '${room}/${type}' stopped`);
 	}
 	// private methods -----------------------------------------------------------------------------
-	private _evaluate(): void {
+	private _evaluate(): Record<string, boolean> {
 		this._logger.debug(this._roomState, "Orchestrator is evaluating");
+
+		const key = this._config.room as keyof Objectives["rooms"];
+		if (!key) {
+			this._logger.warn({ key }, "Key does not exist");
+			return {};
+		}
+		const roomObj = objectives.rooms[key];
+
+
+		const temp = roomObj.temperature;
+		const humidity = roomObj.humidity;
+
+		const state = this._roomState;
+
+		const needsHeating = state.temperature < temp.min - temp.margin;
+		const needsDehumidifying = state.humidity > humidity.max + humidity.margin;
+
+		this._logger.debug({ needsHeating, needsDehumidifying }, "Raw needs calculated");
+
+		// Apply comfort goals
+		if (needsHeating) {
+			logger.info(
+				{ temperature: state.temperature },
+				"Heater set to ON"
+			);
+		}
+
+		if (needsDehumidifying) {
+			logger.info(
+				{ humidity: state.humidity },
+				"Dehumidifier set to ON"
+			);
+		}
+
+		if (state.heater && state.dehumidifier) {
+			this._logger.debug(
+				{ heater: state.heater, dehumidifier: state.dehumidifier },
+				"Conflict detected: heater and dehumidifier both ON"
+			);
+
+			if (state.energyMode === EnergyMode.ECO) {
+				//TODO: turn off dehumidifier
+				this._logger.info(
+					{ EnergyMode: state.energyMode },
+					"Energy mode ECO: dehumidifier turned OFF to save energy"
+				);
+			}
+		}
+
+		// Stop conditions (hysteresis)
+
+		if (state.temperature > temp.max + temp.margin) {
+			if (state.heater) {
+				state.heater = false;
+				logger.info(
+					{ temperature: state.temperature, target: temp },
+					"Temperature above max, heater turned OFF"
+				);
+			}
+		}
+
+		if (state.humidity < humidity.min - humidity.margin) {
+			if (state.dehumidifier) {
+				state.dehumidifier = false;
+				logger.info(
+					{ humidity: state.humidity, target: humidity },
+					"Humidity below min, dehumidifier turned OFF"
+				);
+			}
+		}
+
+		this._logger.debug(
+			{ state: state },
+			"Final actuator intents after evaluation"
+		);
+
+		return { heater: state.heater, dehumidifier: state.dehumidifier };
 	}
 }

@@ -1,5 +1,4 @@
 services:
-
     app:
         build:
             context: ./app
@@ -28,34 +27,10 @@ services:
             - mqtt_network
         restart: unless-stopped
 
-    prometheus:
-        image: bitnami/prometheus:latest
-        ports:
-            - "9090:9090"
-        volumes:
-            - prometheus_data:/opt/bitnami/prometheus/data
-            - ./prometheus.yml:/opt/bitnami/prometheus/prometheus.yml:ro
-        networks:
-            - mqtt_network
-
-    grafana-ui:
-        image: grafana/grafana:latest
-        container_name: grafana-ui
-        ports:
-            - "3000:3000"
-        volumes:
-            - grafana_data:/var/lib/grafana
-            - ./monitoring/dev/grafana/provisioning:/etc/grafana/provisioning:ro
-        networks:
-            - monitoring_network
-
-
 networks:
     mqtt_network:
-    monitoring_network:
 
 volumes:
     mosquitto_data:
     mosquitto_log:
-    prometheus_data:
-    grafana_data:
+

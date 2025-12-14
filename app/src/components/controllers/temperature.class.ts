@@ -31,18 +31,13 @@ export class TemperatureController extends Controller {
 		const { room, type } = this._config;
 		this._logger.debug({ topic, payload }, `Message received from controller '${room}/${type}'`);
 
-		const { value } = payload;
+		const { heater } = payload;
 		const { topic: { publish } } = this._config;
-		let newState = this._heaterState;
 
-		const isCold = (+value < 20 && !this._heaterState);
-		const isHot = (+value > 22 && this._heaterState)
-		if (isCold || isHot) newState = !this._heaterState;
+		if (heater === this._heaterState) return;
 
-		if (newState === this._heaterState) return;
-
-		this._heaterState = newState;
-		this._mqttClient.publish(publish, JSON.stringify({ heater: newState }))
+		this._heaterState = heater;
+		this._mqttClient.publish(publish, JSON.stringify({ heater }))
 		this._logger.debug(
 			{ heater: this._heaterState },
 			`Command published to topic '${publish}' from controller '${room}/${type}'`

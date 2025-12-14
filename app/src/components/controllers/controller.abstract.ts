@@ -37,24 +37,20 @@ export abstract class Controller extends Component {
 			config: this._config,
 		};
 	}
-
 	public override toString(): string {
 		return JSON.stringify(this.toJSON());
 	}
-
 	public start(): void {
 		this._mqttClient.on(
 			'message',
 			(topic, message) => this._onMessage(topic, message.toString())
 		);
 	}
-
 	public stop(): void {
 		const { room, type, topic: { subscribe } } = this._config;
 		this._mqttClient.unsubscribe(subscribe);
 		this._logger.info(`Controller '${room}/${type}' stopped`);
 	}
-
 	// protected methods ---------------------------------------------------------------------------
 	/**
 	 * @brief Handle the message received from the controller topic

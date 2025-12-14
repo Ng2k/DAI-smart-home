@@ -58,7 +58,7 @@
 					"logic": "PID",
 					"topic": {
 						"publish": "home/floor/1/room/living-room/controllers/temperature",
-						"subscribe": "home/floor/1/room/living-room/sensors/temperature"
+						"subscribe": "home/floor/1/room/living-room/orchestrator"
 					}
 				},
 				{
@@ -66,7 +66,7 @@
 					"logic": "PID",
 					"topic": {
 						"publish": "home/floor/1/room/living-room/controllers/humidity",
-						"subscribe": "home/floor/1/room/living-room/sensors/humidity"
+						"subscribe": "home/floor/1/room/living-room/orchestrator"
 					}
 				}
 			]

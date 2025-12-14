@@ -122,6 +122,7 @@ export class RoomOrchestrator extends Component {
 
 		// Apply comfort goals
 		if (needsHeating) {
+			state.heater = true;
 			logger.info(
 				{ temperature: state.temperature },
 				"Heater set to ON"
@@ -129,6 +130,7 @@ export class RoomOrchestrator extends Component {
 		}
 
 		if (needsDehumidifying) {
+			state.dehumidifier = true;
 			logger.info(
 				{ humidity: state.humidity },
 				"Dehumidifier set to ON"
@@ -142,7 +144,7 @@ export class RoomOrchestrator extends Component {
 			);
 
 			if (state.energyMode === EnergyMode.ECO) {
-				//TODO: turn off dehumidifier
+				state.dehumidifier = false;
 				this._logger.info(
 					{ EnergyMode: state.energyMode },
 					"Energy mode ECO: dehumidifier turned OFF to save energy"

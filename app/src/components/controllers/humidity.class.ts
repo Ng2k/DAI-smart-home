@@ -32,18 +32,13 @@ export class HumidityController extends Controller {
 		const { room, type } = this._config;
 		this._logger.debug({ topic, payload }, `Message received from controller '${room}/${type}'`);
 
-		const { value } = payload;
+		const { dehumidifier } = payload;
 		const { topic: { publish } } = this._config;
 
-		const isDry = (value <= 35.00);
-		const isHumid = (value >= 50);
-		let newState = this._dehumidifierState;
-		if (isDry || isHumid) newState = !this._dehumidifierState;
+		if (dehumidifier === this._dehumidifierState) return;
 
-		if (newState === this._dehumidifierState) return;
-
-		this._dehumidifierState = newState;
-		this._mqttClient.publish(publish, JSON.stringify({ dehumidifier: newState }))
+		this._dehumidifierState = dehumidifier;
+		this._mqttClient.publish(publish, JSON.stringify({ dehumidifier }))
 		this._logger.debug(
 			{ heater: this._dehumidifierState },
 			`Command published to topic '${publish}' from controller '${room}/${type}'`

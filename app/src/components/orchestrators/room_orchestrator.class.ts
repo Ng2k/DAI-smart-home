@@ -84,14 +84,17 @@ export class RoomOrchestrator extends Component {
 					);
 			}
 
+		});
+
+		const pubTopic = this._config.topic.publish;
+		setInterval(() => {
 			const msg = JSON.stringify(this._evaluate());
-			const pubTopic = this._config.topic.publish;
 			this._mqttClient.publish(pubTopic, msg);
 			this._logger.info(
 				{ topic: pubTopic, payload: JSON.parse(msg) },
 				"Pubblicato comandi orchestrazione stanza"
 			);
-		});
+		}, 5000);
 	}
 	public stop(): void {
 		const { room, type, topic: { subscribe } } = this._config;
@@ -100,7 +103,7 @@ export class RoomOrchestrator extends Component {
 	}
 	// private methods -----------------------------------------------------------------------------
 	private _evaluate(): Record<string, boolean> {
-		this._logger.debug(this._roomState, "Orchestrator is evaluating");
+		this._logger.info("Orchestrator has started the room state evaluation");
 
 		const key = this._config.room as keyof Objectives["rooms"];
 		if (!key) {
@@ -121,21 +124,8 @@ export class RoomOrchestrator extends Component {
 		this._logger.debug({ needsHeating, needsDehumidifying }, "Raw needs calculated");
 
 		// Apply comfort goals
-		if (needsHeating) {
-			state.heater = true;
-			logger.info(
-				{ temperature: state.temperature },
-				"Heater set to ON"
-			);
-		}
-
-		if (needsDehumidifying) {
-			state.dehumidifier = true;
-			logger.info(
-				{ humidity: state.humidity },
-				"Dehumidifier set to ON"
-			);
-		}
+		if (needsHeating) state.heater = true;
+		if (needsDehumidifying) state.dehumidifier = true;
 
 		if (state.heater && state.dehumidifier) {
 			this._logger.debug(
@@ -153,7 +143,6 @@ export class RoomOrchestrator extends Component {
 		}
 
 		// Stop conditions (hysteresis)
-
 		if (state.temperature > temp.max + temp.margin) {
 			if (state.heater) {
 				state.heater = false;
@@ -174,8 +163,9 @@ export class RoomOrchestrator extends Component {
 			}
 		}
 
+		const intents = { heater: state.heater, dehumidifier: state.dehumidifier }
 		this._logger.debug(
-			{ state: state },
+			{ intents },
 			"Final actuator intents after evaluation"
 		);
 

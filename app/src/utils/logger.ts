@@ -3,11 +3,11 @@ import type { Logger } from 'pino';
 
 const logger_options_dev = {
 	transport: {
-        target: 'pino-pretty',
-        options: {
-        	colorize: true
-        }
-    }
+		target: 'pino-pretty',
+		options: {
+			colorize: true
+		}
+	}
 }
 
 const logger_options_prod = {
@@ -32,9 +32,9 @@ const logger_options_prod = {
 
 const dev_env = ['dev', 'local', 'test'];
 
-export default pino({
-    level: Bun.env.LOG_LEVEL || 'info',
-    ...(dev_env.includes(Bun.env.NODE_ENV || '') ? logger_options_dev : logger_options_prod),
+export const logger = pino({
+	level: Bun.env.LOG_LEVEL || 'info',
+	...(dev_env.includes(Bun.env.NODE_ENV || '') ? logger_options_dev : logger_options_prod),
 	redact: {
 		paths: [],
 		censor: '[PINO REDACTED]',

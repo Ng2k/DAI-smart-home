@@ -1,4 +1,7 @@
-import { logger, MqttConfig, type RegistryAgentConfig, type RoomAgentConfig } from "./utils";
+import {
+	MqttConfig, Database,
+	type RegistryAgentConfig, type RoomAgentConfig
+} from "./utils";
 import { RoomAgent, RegistryAgent } from "./agents";
 import { registry, rooms } from "../config/agents.json";
 import roomsEnv from "../config/rooms_env.json";
@@ -25,10 +28,12 @@ const instatiateAgents = (mqttConfig: MqttConfig): Promise<T_Agents> => {
 }
 
 async function main(): Promise<void> {
-	logger.info("Starting the application");
-	const mqttConfig = new MqttConfig();
-	const { registryAgents, roomAgents } = await instatiateAgents(mqttConfig);
-	roomAgents.forEach(room => room.start());
+	//logger.info("Starting the application");
+	//const mqttConfig = new MqttConfig();
+	//const { registryAgents, roomAgents } = await instatiateAgents(mqttConfig);
+	//roomAgents.forEach(room => room.start());
+	const database = new Database();
+	database.getSensor('temperature', 'f1-living-room');
 }
 
 main();

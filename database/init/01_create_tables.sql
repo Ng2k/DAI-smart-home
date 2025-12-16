@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS components (
     sensor_type sensor_type,
     actuator_type actuator_type,
     room VARCHAR(16) not null,
+    uom VARCHAR(10),
     energy_consumption_value NUMERIC(10,4) not NULL,
     energy_consumption_uom   VARCHAR(16) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
@@ -116,6 +117,7 @@ BEGIN
             IF NOT (
                 NEW.payload ? 'component_type' AND
                 NEW.payload ? 'room' AND
+				NEW.payload ? 'uom' AND
                 NEW.payload ? 'energy_consumption_value' AND
                 NEW.payload ? 'energy_consumption_uom'
             ) THEN
@@ -136,6 +138,7 @@ BEGIN
 				sensor_type,
 				actuator_type,
 				room,
+				uom,
                 energy_consumption_value,
                 energy_consumption_uom,
                 created_at,
@@ -149,6 +152,7 @@ BEGIN
 				(NEW.payload ->> 'sensor_type')::sensor_type,
 				(NEW.payload ->> 'actuator_type')::actuator_type,
 				NEW.payload ->> 'room',
+				NEW.payload ->> 'uom',
                 (NEW.payload ->> 'energy_consumption_value')::NUMERIC,
                 NEW.payload ->> 'energy_consumption_uom',
                 NEW.created_at,

@@ -23,11 +23,9 @@ export class RegistryAgent extends Agent {
 		this._logger.info(`Initializing ${agentConfig.type} agent`);
 	}
 
-	// public methods-------------------------------------------------------------------------------
-
 	// private methods------------------------------------------------------------------------------
 	private _handleAgentRegistration(message: string): void {
-		const { id, name, type }: Record<string, string> = JSON.parse(message);
+		const { id, name, type } = JSON.parse(message);
 		if (!id || !name || !type) {
 			this._logger.error({ message }, 'Invalid agent registration message');
 			return;
@@ -40,10 +38,10 @@ export class RegistryAgent extends Agent {
 		this._logger.debug({ agents: this._agents }, 'Agents registered');
 
 		const payload = JSON.stringify({ success: true, id });
-		this._mqttClient.publish(Topics.REGISTRY_AGENTS_ACK, payload);
-		this._logger.debug(
-			{ payload, topic: Topics.REGISTRY_AGENTS_ACK },
-			'Response to the agent registration request'
-		);
+		const topic = this._agentConfig.pub_topics[0] || "";
+		this._mqttClient.publish(topic, payload, (err, _) => {
+			if (err) this._logger.error({ err }, "Error during the publishing");
+			this._logger.info("Agent successfully registered");
+		});
 	}
 }

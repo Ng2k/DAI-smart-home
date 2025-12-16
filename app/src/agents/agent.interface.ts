@@ -10,7 +10,6 @@
  */
 export interface IAgent {
 	readonly id: string;
-	readonly agentConfig: Record<string, any>;
 
 	/**
 	 * @brief Convert the agent to a JSON object

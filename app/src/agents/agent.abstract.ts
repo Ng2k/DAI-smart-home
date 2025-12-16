@@ -19,12 +19,12 @@ export abstract class Agent implements IAgent {
 	protected abstract readonly _logger: Logger;
 
 	constructor(
-		public readonly agentConfig: AgentConfig,
-		protected readonly mqttConfigs: MqttConfig
+		protected readonly _agentConfig: AgentConfig,
+		protected readonly _mqttConfigs: MqttConfig
 	) {
-		this._mqttClient = mqtt.connect(mqttConfigs.url, {
-			username: mqttConfigs.username,
-			password: mqttConfigs.password
+		this._mqttClient = mqtt.connect(_mqttConfigs.url, {
+			username: _mqttConfigs.username,
+			password: _mqttConfigs.password
 		});
 
 		this._subscribeToTopics();
@@ -37,7 +37,7 @@ export abstract class Agent implements IAgent {
 	public toJSON(): Record<string, any> {
 		return {
 			id: this.id,
-			...this.agentConfig
+			...this._agentConfig
 		};
 	}
 
@@ -52,7 +52,7 @@ export abstract class Agent implements IAgent {
 	 * @returns void
 	 */
 	protected _subscribeToTopics(): void {
-		this._mqttClient.subscribe(this.agentConfig.sub_topics, (err, granted) => {
+		this._mqttClient.subscribe(this._agentConfig.sub_topics, (err, granted) => {
 			if (err) this._logger.error({ err }, "Error during subscription");
 			if (!granted) return;
 			const topics = granted.map(({ topic }) => topic)

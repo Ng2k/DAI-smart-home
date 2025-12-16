@@ -6,19 +6,24 @@ CREATE OR REPLACE FUNCTION apply_agent_event()
 RETURNS TRIGGER AS $$
 BEGIN
     BEGIN
+        -- Validazione minima
         IF NEW.agent_id IS NULL OR NEW.type IS NULL OR NEW.payload IS NULL THEN
             RAISE EXCEPTION 'Missing required fields in agent_event';
         END IF;
 
+        -- Aggiornamento della tabella agents
+        -- Inserisce se non esiste, altrimenti aggiorna
         INSERT INTO agents (
-            id, type, room, floor, sensors, actuators, controllers,
+            id, type, room, floor, pub_topics, sub_topics, sensors, actuators, controllers,
             created_at, created_by, updated_at, updated_by
         )
         VALUES (
             NEW.agent_id,
-            (NEW.payload->>'type')::agent_type,
+            (NEW.payload->>'type')::agent_type,       -- assume payload JSON ha type
             NEW.payload->>'room',
             (NEW.payload->>'floor')::INT,
+			NEW.payload->'pub_topics',
+			NEW.payload->'sub_topics',
             NEW.payload->'sensors',
             NEW.payload->'actuators',
             NEW.payload->'controllers',
@@ -28,7 +33,8 @@ BEGIN
             NEW.created_by
         )
         ON CONFLICT (id) DO UPDATE
-        SET type = EXCLUDED.type,
+        SET
+            type = EXCLUDED.type,
             room = EXCLUDED.room,
             floor = EXCLUDED.floor,
             sensors = EXCLUDED.sensors,
@@ -36,10 +42,10 @@ BEGIN
             controllers = EXCLUDED.controllers,
             updated_at = EXCLUDED.updated_at,
             updated_by = EXCLUDED.updated_by;
-
         RETURN NEW;
 
     EXCEPTION WHEN OTHERS THEN
+        -- In caso di errore, scrive nella dead letter table
         INSERT INTO agent_events_deadletter (
             event_id, agent_id, type, payload,
             error_message, failed_at, created_at, created_by

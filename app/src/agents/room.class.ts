@@ -12,7 +12,7 @@ import {
 	sensorTypeToClassMapping,
 	actuatorTypeToClassMapping,
 } from "../utils";
-import type { Logger, RoomAgentConfig, } from "../utils";
+import type { Logger, RoomConfig, } from "../utils";
 import { Controller, Sensor, Actuator, RoomOrchestrator } from "../components";
 import {
 	type HumidityModelConfig,
@@ -42,11 +42,13 @@ export class RoomAgent extends Agent {
 	};
 
 	constructor(
-		agentConfig: RoomAgentConfig,
+		agentConfig: RoomConfig,
 		mqttConfigs: MqttConfig,
 		roomEnvConfig: Record<string, any>
 	) {
 		super(agentConfig, mqttConfigs);
+
+		this._logger.info(`Initializing ${agentConfig.type}/${agentConfig.room} agent`);
 
 		this._roomEnv = new RoomEnv(
 			new TemperatureModel(roomEnvConfig.temperature as TemperatureModelConfig),
@@ -54,10 +56,9 @@ export class RoomAgent extends Agent {
 		);
 
 		this._registerAgent();
-
-		const { orchestrator } = this.agentConfig as RoomAgentConfig;
+		const { orchestrator } = this.agentConfig as RoomConfig;
 		this._orchestrator = new RoomOrchestrator(
-			{ ...orchestrator, room: this.agentConfig.name },
+			{ ...orchestrator, room: this.agentConfig.room },
 			mqttConfigs
 		);
 
@@ -65,10 +66,7 @@ export class RoomAgent extends Agent {
 		this._initializeControllers();
 		this._initializeActuators();
 
-		this._subscribeToTopics();
 		this._startEnvLoop();
-
-		this._logger.info(`${agentConfig.name} agent initialized`);
 	}
 
 	// public methods---------------------------------------------------------------------------------
@@ -83,17 +81,6 @@ export class RoomAgent extends Agent {
 		this._sensors.forEach(sensor => sensor.stop());
 		this._actuators.forEach(actuator => actuator.stop());
 		this._controllers.forEach(controller => controller.stop());
-	}
-
-	// protected methods------------------------------------------------------------------------------
-	protected override _subscribeToTopics(): void {
-		super._subscribeToTopics();
-
-		this._actuators.forEach(act => {
-			const { config: { topic: { publish } } } = act.toJSON();
-			this._logger.debug({ publish }, "Room agent subscribed to topic");
-			this._mqttClient.subscribe(publish);
-		})
 	}
 
 	// private methods--------------------------------------------------------------------------------
@@ -122,7 +109,7 @@ export class RoomAgent extends Agent {
 	 * @returns void
 	 */
 	private _initializeSensors(): void {
-		const { sensors } = this.agentConfig as RoomAgentConfig;
+		const { sensors } = this.agentConfig as RoomConfig;
 		sensors.map((sensor) => {
 			const type = sensor.type
 			const SensorClass = sensorTypeToClassMapping[type];
@@ -131,7 +118,7 @@ export class RoomAgent extends Agent {
 				return;
 			}
 			const sensorInstance = new SensorClass(
-				{ ...sensor, room: this.agentConfig.name },
+				{ ...sensor, room: this.agentConfig.room },
 				this.mqttConfigs,
 				this._roomEnv
 			);
@@ -146,7 +133,7 @@ export class RoomAgent extends Agent {
 	 * @returns void
 	 */
 	private _initializeActuators(): void {
-		const { actuators } = this.agentConfig as RoomAgentConfig;
+		const { actuators } = this.agentConfig as RoomConfig;
 		actuators.map((actuator) => {
 			const type = actuator.type
 			const ActuatorClass = actuatorTypeToClassMapping[type];
@@ -155,7 +142,7 @@ export class RoomAgent extends Agent {
 				return;
 			}
 			const actuatorInstance = new ActuatorClass(
-				{ ...actuator, room: this.agentConfig.name },
+				{ ...actuator, room: this.agentConfig.room },
 				this.mqttConfigs
 			);
 			this._actuators.push(actuatorInstance);
@@ -168,7 +155,7 @@ export class RoomAgent extends Agent {
 	 * @returns void
 	 */
 	private _initializeControllers(): void {
-		const { controllers } = this.agentConfig as RoomAgentConfig;
+		const { controllers } = this.agentConfig as RoomConfig;
 		controllers.map((controller) => {
 			const type = controller.type;
 			const ControllerClass = controllerTypeToClassMapping[type];
@@ -177,7 +164,7 @@ export class RoomAgent extends Agent {
 				return;
 			}
 			const controllerInstance = new ControllerClass(
-				{ ...controller, room: this.agentConfig.name },
+				{ ...controller, room: this.agentConfig.room },
 				this.mqttConfigs
 			);
 			this._controllers.push(controllerInstance);

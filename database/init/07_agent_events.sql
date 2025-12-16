@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS agents (
     type agent_type NOT NULL,
     room VARCHAR(16),
     floor INT,
+	sub_topics JSONB,
+    pub_topics JSONB,
     orchestrator UUID,
     sensors JSONB,
     actuators JSONB,

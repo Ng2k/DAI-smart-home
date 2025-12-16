@@ -100,7 +100,9 @@ values (
 	gen_random_uuid(),
 	'AGENT_CREATED',
 	'{
-		"type": "registry"
+		"type": "registry",
+		"pub_topics": ["home/registry/agents/ack"],
+		"sub_topics": ["home/registry/agents"]
 	}',
 	'nicola guerra'
 );

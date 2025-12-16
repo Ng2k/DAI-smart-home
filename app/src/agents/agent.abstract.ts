@@ -27,6 +27,8 @@ export abstract class Agent implements IAgent {
 			password: mqttConfigs.password
 		});
 
+		this._subscribeToTopics();
+
 		this._startErrorListener();
 		this._startMessageListener();
 	}
@@ -50,9 +52,11 @@ export abstract class Agent implements IAgent {
 	 * @returns void
 	 */
 	protected _subscribeToTopics(): void {
-		Object.keys(this._topicToFunctionMap).forEach(topic => {
-			this._mqttClient.subscribe(topic);
-			this._logger.debug({ topic }, 'Subscribed to topic');
+		this._mqttClient.subscribe(this.agentConfig.sub_topics, (err, granted) => {
+			if (err) this._logger.error({ err }, "Error during subscription");
+			if (!granted) return;
+			const topics = granted.map(({ topic }) => topic)
+			this._logger.info({ topics }, "Completed subscription for topics");
 		});
 	}
 
@@ -64,7 +68,11 @@ export abstract class Agent implements IAgent {
 	 */
 	private _startErrorListener(): void {
 		this._mqttClient.on('error', (error) => {
-			this._logger.error({ error }, error.message);
+			let msg = "";
+			const { code } = error as Record<string, any>;
+			if (code === "ECONNREFUSED") msg = "Connection error to the mqtt server";
+			this._logger.error(msg);
+			this._mqttClient.end();
 		});
 	}
 	/**

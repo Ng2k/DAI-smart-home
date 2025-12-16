@@ -7,32 +7,37 @@
 import type { AgentType, SensorType, EnergyMode, Uom, ControllerType, ActuatorType } from "./enums";
 
 /**
- * @brief Agent configuration type
- * @type AgentConfig
+ * @brief Registry configuration type
+ * @type RegistryConfig
  */
-export type AgentConfig = RegistryAgentConfig | RoomAgentConfig;
-
-/**
- * @brief Registry agent configuration type
- * @type RegistryAgentConfig
- */
-export type RegistryAgentConfig = {
-	name: string;
+export type RegistryConfig = {
+	id: string;
 	type: AgentType;
+	pub_topics: string[];
+	sub_topics: string[];
+	created_at: Date;
+	created_by: string;
+	updated_at: Date;
+	updated_by: string;
 };
 
 /**
  * @brief Room agent configuration type
  * @type RoomAgentConfig
  */
-export type RoomAgentConfig = {
-	name: string;
+export type RoomConfig = {
 	type: AgentType;
+	room: string;
+	floor: string;
+	pub_topics: string[];
+	sub_topics: string[];
 	orchestrator: OrchestratorConfig;
 	sensors: SensorConfig[];
 	actuators: ActuatorConfig[];
 	controllers: ControllerConfig[];
 };
+
+export type AgentConfig = RegistryConfig | RoomConfig;
 
 /**
  * @brief Orchestrator configuration type

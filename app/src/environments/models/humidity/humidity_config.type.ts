@@ -4,7 +4,7 @@
  * @author Nicola Guerra
  */
 
-export interface HumidityModelConfig {
+export type HumidityModelConfig = {
 	initialHumidity: number;      // %
 	ambientHumidity: number;      // %
 	dehumidifyingRate: number;    // % per second

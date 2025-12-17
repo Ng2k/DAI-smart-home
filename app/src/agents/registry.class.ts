@@ -5,7 +5,8 @@
  */
 import type { MqttClient } from "mqtt";
 
-import { logger, Topics, MqttConfig, type Logger, type RegistryConfig } from "../utils";
+import { logger, Topics } from "../utils";
+import type { Logger, MqttConfig, RegistryConfig, Database } from "../utils";
 import { Agent } from "./agent.abstract";
 
 /**
@@ -15,13 +16,18 @@ import { Agent } from "./agent.abstract";
 export class RegistryAgent extends Agent {
 	private readonly _agents: Record<string, Record<string, string>> = {};
 
+	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
 	protected readonly _topicToFunctionMap: Record<string, (message: string) => void> = {
 		[Topics.REGISTRY_AGENTS]: this._handleAgentRegistration.bind(this),
 	};
-	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
-	constructor(agentConfig: RegistryConfig, mqttClient: MqttClient) {
-		super(agentConfig, mqttClient);
+	constructor(
+		agentConfig: RegistryConfig,
+		mqttConfig: MqttConfig,
+		mqttClient: MqttClient,
+		dbClient: Database
+	) {
+		super(agentConfig, mqttConfig, mqttClient, dbClient);
 		super._subscribeToTopics(this._logger);
 		super._startErrorListener(this._logger);
 		super._startMessageListener(this._logger);

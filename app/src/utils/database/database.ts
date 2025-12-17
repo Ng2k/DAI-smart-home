@@ -4,12 +4,9 @@
  * @author Nicola Guerra
  */
 import { SQL } from "bun"
-
-
 import { logger, type Logger } from "../logger.ts"
-import type {
-	AgentConfig,
-	RegistryConfig, RoomConfig } from "../types.ts";
+import type { AgentConfig, RegistryConfig, RoomConfig } from "../types.ts";
+import type { AgentComponentsDTO } from "./dtos/component.dto.ts";
 
 /**
  * @class Database
@@ -18,6 +15,7 @@ export class Database {
 	static #instance: Database;
 	private _client: SQL;
 	private _logger: Logger = logger.child({ name: this.constructor.name })
+	private _queryDir = `${__dirname}/queries`;
 
 	private constructor() {
 		this._client = new SQL(Bun.env.DATABASE_URL || "");
@@ -38,7 +36,7 @@ export class Database {
 	}
 
 	public async getRegistry(): Promise<RegistryConfig> {
-		const results = await this._client.file(`${__dirname}/queries/get_registry.sql`);
+		const results = await this._client.file(`${this._queryDir}/get_registry.sql`);
 		return results.values().toArray()[0];
 	}
 
@@ -47,7 +45,7 @@ export class Database {
 	 * @returns Promise<{ registry: RegistryConfig, rooms: RoomConfig }>
 	 */
 	public async getAgentConfigs(): Promise<{ registry: RegistryConfig, rooms: RoomConfig[] }> {
-		const results = await this._client.file(`${__dirname}/queries/get_all_agents.sql`);
+		const results = await this._client.file(`${this._queryDir}/get_all_agents.sql`);
 		const resultsList = results.values().toArray();
 		return resultsList.reduce(
 			(
@@ -66,5 +64,16 @@ export class Database {
 			},
 			{ registry: {}, rooms: [] }
 		);
+	}
+
+	/**
+	 * @brief Returns all the components for the specific agent
+	 * @param id {string} unique identifier for the agent
+	 * @return Agent components
+	 */
+	public async getAgentComponents(id: string): Promise<AgentComponentsDTO> {
+		const query = `${this._queryDir}/get_all_agent_components.sql`;
+		const results = await this._client.file(query, [id]);
+		return results.values().toArray()[0].components;
 	}
 };

@@ -26,6 +26,7 @@ export type RegistryConfig = {
  * @type RoomAgentConfig
  */
 export type RoomConfig = {
+	id: string;
 	type: AgentType;
 	room: string;
 	floor: string;
@@ -59,12 +60,11 @@ export type OrchestratorConfig = {
  * @type SensorConfig
  */
 export type SensorConfig = {
-	room?: string;
+	id: string;
 	type: SensorType;
-	readUom: Uom;
-	frequency: number;
-	frequencyUom: Uom;
-	topic: string;
+	uom: string;
+	power: number;
+	powerUom: string;
 };
 
 /**
@@ -86,12 +86,10 @@ export type ControllerConfig = {
  * @type ActuatorConfig
  */
 export type ActuatorConfig = {
-	room?: string;
+	id: string;
 	type: ActuatorType;
-	topic: {
-		publish: string,
-		subscribe: string
-	}
+	power: number;
+	powerUom: string;
 };
 
 /**
@@ -121,3 +119,12 @@ export type Objectives = {
 		}
 	}
 };
+
+
+
+
+
+
+
+
+

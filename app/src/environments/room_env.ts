@@ -15,7 +15,7 @@ export class RoomEnv {
 		public readonly humidityModel: HumidityModel,
 	) { }
 
-	// public methods --------------------------------------------------------------------------------
+	// public methods ------------------------------------------------------------------------------
 	/**
 	 * @brief Update the sensors value
 	 * @param dt {number}

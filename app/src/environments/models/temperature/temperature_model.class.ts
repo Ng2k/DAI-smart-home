@@ -18,7 +18,7 @@ export class TemperatureModel implements IModel {
 		this.temperature = config.initialTemperature;
 	}
 
-	//public methods ---------------------------------------------------------------------------------
+	//public methods -------------------------------------------------------------------------------
 
 	public setState(state: boolean): void {
 		this.heaterOn = state;

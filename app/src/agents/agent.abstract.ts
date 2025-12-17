@@ -6,7 +6,7 @@
 import { type MqttClient } from "mqtt";
 
 import { AgentType } from "../utils";
-import type { Logger, AgentConfig, RoomConfig } from "../utils"
+import type { Logger, AgentConfig, Database, MqttConfig, RoomConfig } from "../utils"
 import type { IAgent } from "./agent.interface";
 
 /**
@@ -18,7 +18,9 @@ export abstract class Agent implements IAgent {
 
 	constructor(
 		protected readonly _agentConfig: AgentConfig,
+		protected readonly _mqttConfig: MqttConfig,
 		protected readonly _mqttClient: MqttClient,
+		protected readonly _dbClient: Database
 	) { }
 
 	// public methods ------------------------------------------------------------------------------

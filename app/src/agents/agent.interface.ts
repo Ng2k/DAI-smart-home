@@ -9,8 +9,6 @@
  * @interface IAgent
  */
 export interface IAgent {
-	readonly id: string;
-
 	/**
 	 * @brief Convert the agent to a JSON object
 	 * @returns A JSON object representing the agent

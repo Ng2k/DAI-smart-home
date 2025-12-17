@@ -3,9 +3,10 @@
  * @file agent.abstract.ts
  * @author Nicola Guerra
  */
-import mqtt, { type MqttClient } from "mqtt";
+import { type MqttClient } from "mqtt";
 
-import type { Logger, AgentConfig, MqttConfig } from "../utils"
+import { AgentType } from "../utils";
+import type { Logger, AgentConfig, RoomConfig } from "../utils"
 import type { IAgent } from "./agent.interface";
 
 /**
@@ -13,34 +14,17 @@ import type { IAgent } from "./agent.interface";
  * @class Agent
  */
 export abstract class Agent implements IAgent {
-	public readonly id: string = crypto.randomUUID().toString()
-	protected _mqttClient: MqttClient;
 	protected abstract readonly _topicToFunctionMap: Record<string, (message: string) => void>;
-	protected abstract readonly _logger: Logger;
 
 	constructor(
 		protected readonly _agentConfig: AgentConfig,
-		protected readonly _mqttConfigs: MqttConfig
-	) {
-		this._mqttClient = mqtt.connect(_mqttConfigs.url, {
-			username: _mqttConfigs.username,
-			password: _mqttConfigs.password
-		});
-
-		this._subscribeToTopics();
-
-		this._startErrorListener();
-		this._startMessageListener();
-	}
+		protected readonly _mqttClient: MqttClient,
+	) { }
 
 	// public methods ------------------------------------------------------------------------------
 	public toJSON(): Record<string, any> {
-		return {
-			id: this.id,
-			...this._agentConfig
-		};
+		return { ...this._agentConfig };
 	}
-
 	public toString(): string {
 		return JSON.stringify(this.toJSON(), null, 2);
 	}
@@ -51,27 +35,37 @@ export abstract class Agent implements IAgent {
 	 * @details This method subscribes to the topics for the agent
 	 * @returns void
 	 */
-	protected _subscribeToTopics(): void {
-		this._mqttClient.subscribe(this._agentConfig.sub_topics, (err, granted) => {
-			if (err) this._logger.error({ err }, "Error during subscription");
+	protected _subscribeToTopics(logger: Logger): void {
+		const topics = this._agentConfig.sub_topics;
+		const type = this._agentConfig.type;
+
+		const logOpts = { topics, agent: '' };
+		if (type === AgentType.REGISTRY) logOpts.agent = AgentType.REGISTRY;
+		else logOpts.agent = `${type}/${(this._agentConfig as RoomConfig).room}`;
+
+		if (topics.length === 0) {
+			logger.warn({ ...logOpts }, "This agent has no topics to subscribed to");
+			return;
+		}
+
+		this._mqttClient.subscribe(topics, (err, granted) => {
+			if (err) logger.error({ err }, "Error during subscription");
 			if (!granted) return;
-			const topics = granted.map(({ topic }) => topic)
-			this._logger.info({ topics }, "Completed subscription for topics");
+
+			logger.info({ ...logOpts }, "Completed subscription for topics");
 		});
 	}
-
-	// private methods -----------------------------------------------------------------------------
 	/**
 	 * @brief Start the error listener
 	 * @details This method starts the error listener for the MQTT client
 	 * @returns void
 	 */
-	private _startErrorListener(): void {
+	protected _startErrorListener(logger: Logger): void {
 		this._mqttClient.on('error', (error) => {
 			let msg = "";
 			const { code } = error as Record<string, any>;
 			if (code === "ECONNREFUSED") msg = "Connection error to the mqtt server";
-			this._logger.error(msg);
+			logger.error(msg);
 			this._mqttClient.end();
 		});
 	}
@@ -80,16 +74,16 @@ export abstract class Agent implements IAgent {
 	 * @details This method starts the message listener for the MQTT client
 	 * @returns void
 	 */
-	private _startMessageListener(): void {
+	protected _startMessageListener(logger: Logger): void {
 		this._mqttClient.on('message', (topic, message) => {
 			const payload = message.toString();
-			this._logger.debug({ topic, message: JSON.parse(payload) }, 'Message received');
+			logger.debug({ topic, message: JSON.parse(payload) }, 'Message received');
 
 			const functionToCall = this._topicToFunctionMap[topic];
 			if (!functionToCall) return;
 
 			functionToCall(payload);
-			this._logger.info({ payload: JSON.parse(payload) }, 'Operation for the topic completed successfully');
+			logger.info({ payload: JSON.parse(payload) }, 'Operation for the topic completed successfully');
 		});
 	}
 }

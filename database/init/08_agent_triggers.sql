@@ -11,41 +11,46 @@ BEGIN
             RAISE EXCEPTION 'Missing required fields in agent_event';
         END IF;
 
-        -- Aggiornamento della tabella agents
-        -- Inserisce se non esiste, altrimenti aggiorna
         INSERT INTO agents (
-            id, type, room, floor, pub_topics, sub_topics, sensors, actuators, controllers,
+            id, type, room, floor,
+            pub_topics, sub_topics,
+            sensors, actuators, controllers,
             created_at, created_by, updated_at, updated_by
         )
         VALUES (
             NEW.agent_id,
-            (NEW.payload->>'type')::agent_type,       -- assume payload JSON ha type
+            (NEW.payload->>'type')::agent_type,
             NEW.payload->>'room',
             (NEW.payload->>'floor')::INT,
-			NEW.payload->'pub_topics',
-			NEW.payload->'sub_topics',
+
+            COALESCE(NEW.payload->'pub_topics', '[]'::jsonb),
+            COALESCE(NEW.payload->'sub_topics', '[]'::jsonb),
+
             NEW.payload->'sensors',
             NEW.payload->'actuators',
             NEW.payload->'controllers',
+
             NEW.created_at,
             NEW.created_by,
             NEW.created_at,
             NEW.created_by
-        )
+       )
         ON CONFLICT (id) DO UPDATE
         SET
             type = EXCLUDED.type,
             room = EXCLUDED.room,
             floor = EXCLUDED.floor,
+            pub_topics = EXCLUDED.pub_topics,
+            sub_topics = EXCLUDED.sub_topics,
             sensors = EXCLUDED.sensors,
             actuators = EXCLUDED.actuators,
             controllers = EXCLUDED.controllers,
             updated_at = EXCLUDED.updated_at,
             updated_by = EXCLUDED.updated_by;
+
         RETURN NEW;
 
     EXCEPTION WHEN OTHERS THEN
-        -- In caso di errore, scrive nella dead letter table
         INSERT INTO agent_events_deadletter (
             event_id, agent_id, type, payload,
             error_message, failed_at, created_at, created_by
@@ -61,10 +66,10 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =========================================================
--- TRIGGER AGENTS
+-- TRIGGER
 -- =========================================================
 
-DROP TRIGGER IF EXISTS trg_apply_agent_event ON agent_events;
+DROP TRIGGER IF EXISTS trg_apply_agent_event ON agent_event;
 
 CREATE TRIGGER trg_apply_agent_event
 AFTER INSERT ON agent_events

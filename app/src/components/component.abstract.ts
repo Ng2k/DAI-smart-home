@@ -3,12 +3,9 @@
  * @brief Abstract class for components
  * @author Nicola Guerra
  */
-import { randomUUID } from "crypto";
-
 import mqtt, { type MqttClient } from "mqtt";
 
 import { MqttConfig, TimeUom, type Logger } from "../utils";
-
 import type { IComponent } from "./component.interface";
 
 export abstract class Component implements IComponent {
@@ -22,6 +19,6 @@ export abstract class Component implements IComponent {
 		});
 	}
 
-	public abstract start(): void;
-	public abstract stop(): void;
+	public abstract start(logger: Logger): void;
+	public abstract stop(logger: Logger): void;
 }

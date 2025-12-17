@@ -65,6 +65,10 @@ export type SensorConfig = {
 	uom: string;
 	power: number;
 	powerUom: string;
+	frequency: number;
+	frequencyUom: string;
+	pubTopics: [string, ...string[]];
+	subTopics: string[];
 };
 
 /**
@@ -119,6 +123,13 @@ export type Objectives = {
 		}
 	}
 };
+
+
+
+
+
+
+
 
 
 

@@ -13,47 +13,29 @@ import { RoomEnv } from "../../environments/";
  * @brief Class for the humidity sensor
  */
 export class HumiditySensor extends Sensor {
-	protected override readonly _logger: Logger = logger.child({ name: this.constructor.name });
+	protected readonly logger: Logger;
 
 	constructor(config: SensorConfig, mqttConfig: MqttConfig, env: RoomEnv) {
 		super(config, mqttConfig, env);
-		this._logger.info({}, 'Sensor Initialized.')
+		this.logger = logger.child({ name: this.constructor.name, sensor_id: config.id });
+		this.logger.info({ sensor_id: config.id }, 'Sensor Initialized.')
 	}
 
-	// public methods --------------------------------------------------------------------------------
+	// public methods ------------------------------------------------------------------------------
 	public override start(): void {
-		this._logger.debug(
-			{
-				room: this._config.room,
-				type: this._config.type
-			},
-			'Starting sensor'
-		)
-		super.start();
-		this._logger.info(
-			{
-				room: this._config.room,
-				type: this._config.type
-			},
-			'Finish sensor operations'
-		);
+		super.start(this.logger);
+		this.logger.info('Sensor started');
 	}
 	public override stop(): void {
-		super.stop();
-		this._logger.info(
-			{
-				room: this._config.room,
-				type: this._config.type
-			},
-			'Sensor stopped.'
-		);
+		super.stop(this.logger);
+		this.logger.info('Sensor stopped.');
 	}
 
-	// protected methods -----------------------------------------------------------------------------
+	// protected methods ---------------------------------------------------------------------------
 	protected _run(): Record<string, any> {
 		return {
-			id: this._id,
-			uom: (this._config as SensorConfig).readUom,
+			id: this._config.id,
+			uom: this._config.uom,
 			value: this._env.humidityModel.getValue()
 		}
 	}

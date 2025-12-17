@@ -3,7 +3,7 @@
  * @file room.class.ts
  * @author Nicola Guerra
  */
-import mqtt, { type MqttClient } from "mqtt";
+import { type MqttClient } from "mqtt";
 
 import { Agent } from "./agent.abstract.ts";
 import { logger, domainMapper } from "../utils/index.ts";
@@ -51,12 +51,15 @@ export class RoomAgent extends Agent {
 		// sensors
 		this._sensors = sensors.reduce((acc: Sensor[], sensorDTO: SensorDTO) => {
 			const config = domainMapper(sensorDTO) as SensorConfig;
+			let sensor;
 			switch (config.type) {
 				case 'temperature':
-					acc.push(new TemperatureSensor(config, this._mqttConfig, this._environment));
+					sensor = new TemperatureSensor(config, this._mqttConfig, this._environment);
+					sensor.start();
 					break;
 				case 'humidity':
-					acc.push(new HumiditySensor(config, this._mqttConfig, this._environment));
+					sensor = new HumiditySensor(config, this._mqttConfig, this._environment);
+					sensor.start();
 					break;
 				default:
 					this._logger.warn(
@@ -66,6 +69,15 @@ export class RoomAgent extends Agent {
 			}
 			return acc;
 		}, []);
+
+		// actuators
+		// controllers
+		// orchestrator
+
+		//Update the env simulation
+		setInterval(() => {
+			this._environment.update(1);
+		}, 500);
 	}
 
 	// protected methods ---------------------------------------------------------------------------

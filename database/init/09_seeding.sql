@@ -45,7 +45,7 @@ VALUES (
         "power_uom": "kW",
 		"frequency": 2,
 		"frequency_uom": "sec",
-		"pub_topics": ["home/floor/1/room/living-room/sensors/temperature"],
+		"pub_topics": ["home/floor/1/room/living-room/sensors/humidity"],
 		"sensor_type": "humidity",
 		"uom": "%"
     }',

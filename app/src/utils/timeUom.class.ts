@@ -22,7 +22,7 @@ export class TimeUom {
 	 * @param uom The unit of measure to convert from
 	 * @returns The converted value
 	 */
-	public convert(value: number, uom: Uom): number {
+	public convert(value: number, uom: string): number {
 		if (!this._conversionMapping[uom]) return value;
 		return value * this._conversionMapping[uom];
 	}

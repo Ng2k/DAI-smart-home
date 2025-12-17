@@ -19,7 +19,6 @@ export class TemperatureModel implements IModel {
 	}
 
 	//public methods -------------------------------------------------------------------------------
-
 	public setState(state: boolean): void {
 		this.heaterOn = state;
 	}

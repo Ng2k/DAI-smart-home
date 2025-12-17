@@ -1,3 +1,5 @@
+import type { Logger } from "pino";
+
 /**
  * @file component.interface.ts
  * @brief Interface for all the components (sensors, actuators, controllers)
@@ -6,12 +8,14 @@
 export interface IComponent {
 	/**
 	 * @brief Start component processes
+	 * @param logger {Logger} Class logger
 	 * @return void
 	 */
-	start(): void;
+	start(logger: Logger): void;
 	/**
 	 * @brief Stop component processes
+	 * @param logger {Logger} Class logger
 	 * @return void
 	 */
-	stop(): void;
+	stop(logger: Logger): void;
 }

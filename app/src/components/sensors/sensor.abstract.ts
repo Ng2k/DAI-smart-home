@@ -3,8 +3,6 @@
  * @brief Abstract class for sensors
  * @author Nicola Guerra
  */
-import { type Packet } from "mqtt";
-
 import { MqttConfig, type Logger, type SensorConfig } from "../../utils";
 import { Component } from "../component.abstract";
 import { RoomEnv } from "../../environments";
@@ -22,15 +20,14 @@ export abstract class Sensor extends Component {
 		super(_mqttConfigs);
 	}
 
-	// public methods --------------------------------------------------------------------------------
-
+	// public methods ------------------------------------------------------------------------------
 	public start(logger: Logger): void {
-		const { frequency, frequencyUom, topic } = this._config;
+		const { frequency, frequencyUom, pubTopics } = this._config;
 		const frequencyConverted = this._timeUom.convert(frequency, frequencyUom);
 
 		setInterval(() => {
 			const payload = this._run();
-			this._mqttClient.publish(topic, JSON.stringify(payload), (err, _) => {
+			this._mqttClient.publish(pubTopics[0], JSON.stringify(payload), (err, _) => {
 				if (err) {
 					logger.error({ err }, "Error during the publishing of sensor value");
 					return;
@@ -41,18 +38,18 @@ export abstract class Sensor extends Component {
 	}
 
 	public stop(logger: Logger): void {
-		const { topic } = this._config;
-		this._mqttClient.unsubscribe(topic, (err: any, _: any) => {
+		const { subTopics } = this._config;
+		this._mqttClient.unsubscribe(subTopics, (err: any, _: any) => {
 			if (err) {
-				logger.error({ err }, `Couldn't unsubscribe from the topic ${topic}`)
+				logger.error({ err }, `Couldn't unsubscribe from the topic ${subTopics}`)
 				return;
 			}
 
-			logger.info(`Successfully unsubscribed to the topic ${topic}`);
+			logger.info(`Successfully unsubscribed to the topic ${subTopics}`);
 		});
 	}
 
-	// protected methods -----------------------------------------------------------------------------
+	// protected methods ---------------------------------------------------------------------------
 	/**
 	 * @brief Function for the creation of component values
 	 * @return Record<string, any>

@@ -4,16 +4,14 @@
  * @author Nicola Guerra
  */
 
-import type {
-	ActuatorConfig, ControllerConfig, OrchestratorConfig, SensorConfig
-} from "../../types";
+import type { ActuatorConfig, SensorConfig } from "../../types";
 import type { SensorType } from "../../enums";
 
 export interface ComponentDTO {
 	id: string;
 	component_type: string;
-	energy_consumption_value: number;
-	energy_consumption_uom: string;
+	power: number;
+	power_uom: string;
 	created_at: string;
 	created_by: string;
 	updated_at: string;
@@ -22,6 +20,10 @@ export interface ComponentDTO {
 
 export interface SensorDTO extends ComponentDTO {
 	sensor_type: SensorType;
+	pub_topics: [string, ...string[]];
+	sub_topics: string[];
+	frequency: number;
+	frequency_uom: string;
 	uom: string;
 }
 
@@ -48,15 +50,19 @@ export const domainMapper = (dto: ComponentDTO): SensorConfig | ActuatorConfig =
 				id: dto.id,
 				type: (dto as SensorDTO).sensor_type,
 				uom: (dto as SensorDTO).uom,
-				power: dto.energy_consumption_value,
-				powerUom: dto.energy_consumption_uom
+				power: dto.power,
+				powerUom: dto.power_uom,
+				subTopics: (dto as SensorDTO).sub_topics,
+				pubTopics: (dto as SensorDTO).pub_topics,
+				frequency: (dto as SensorDTO).frequency,
+				frequencyUom: (dto as SensorDTO).frequency_uom
 			} as SensorConfig;
 		default:
 			return {
 				id: dto.id,
 				type: (dto as ActuatorDTO).actuator_type,
-				power: dto.energy_consumption_value,
-				powerUom: dto.energy_consumption_uom
+				power: dto.power,
+				powerUom: dto.power_uom
 			} as ActuatorConfig;
 	}
 }

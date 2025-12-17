@@ -37,15 +37,18 @@ CREATE TABLE IF NOT EXISTS component_events_deadletter (
 -- =========================================================
 -- PROJECTION TABLE
 -- =========================================================
-
 CREATE TABLE IF NOT EXISTS components (
     id UUID PRIMARY KEY,
     component_type component_type NOT NULL,
     sensor_type sensor_type,
     actuator_type actuator_type,
     uom VARCHAR(10),
-    energy_consumption_value NUMERIC(10,4) NOT NULL,
-    energy_consumption_uom VARCHAR(16) NOT NULL,
+    frequency NUMERIC(10, 0),
+    frequency_uom VARCHAR(5),
+    power NUMERIC(10,4) not NULL,
+    power_uom VARCHAR(16) NOT NULL,
+    sub_topics JSONB default '[]'::jsonb,
+    pub_topics JSONB default '[]'::jsonb,
     created_at TIMESTAMPTZ NOT NULL,
     created_by VARCHAR(255) NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,

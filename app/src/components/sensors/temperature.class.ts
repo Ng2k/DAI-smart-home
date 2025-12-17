@@ -12,45 +12,28 @@ import type { RoomEnv } from "../../environments";
  * @class Sensor
  */
 export class TemperatureSensor extends Sensor {
-	protected override readonly _logger: Logger = logger.child({ name: this.constructor.name });
+	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
 
 	constructor(config: SensorConfig, mqttConfig: MqttConfig, env: RoomEnv) {
 		super(config, mqttConfig, env);
-		this._logger.info({}, 'Sensor Initialized.')
+		this._logger.info({ sensor_id: this._config.id }, 'Sensor Initialized.');
 	}
 
 	// public methods --------------------------------------------------------------------------------
 	public override start(): void {
-		this._logger.debug(
-			{
-				room: this._config.room,
-				type: this._config.type
-			},
-			'Starting sensor'
-		)
-		super.start();
-		this._logger.info(
-			{
-				room: this._config.room,
-				type: this._config.type
-			},
-			'Finish sensor operations'
-		);
+		this._logger.info({ sensor_id: this._config.id }, 'Starting sensor');
+		super.start(this._logger);
 	}
-
 	public override stop(): void {
-		super.stop();
-		this._logger.info({
-			room: this._config.room,
-			type: this._config.type
-		}, 'Sensor stopped.');
+		super.stop(this._logger);
+		this._logger.info({ sensor_id: this._config.id }, 'Sensor stopped.');
 	}
 
 	// protected methods -----------------------------------------------------------------------------
 	protected _run(): Record<string, any> {
 		return {
-			id: this._id,
-			uom: (this._config as SensorConfig).readUom,
+			id: this._config.id,
+			uom: this._config.uom,
 			value: this._env.temperatureModel.getValue()
 		}
 	}

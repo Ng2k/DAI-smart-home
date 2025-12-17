@@ -17,13 +17,17 @@ VALUES (
     'COMPONENT_CREATED',
     '{
         "component_type": "sensor",
-        "energy_consumption_value": 0.15,
-        "energy_consumption_uom": "kW",
+        "power": 0.15,
+        "power_uom": "kW",
+		"frequency": 2,
+		"frequency_uom": "sec",
+		"pub_topics": ["home/floor/1/room/living-room/sensors/temperature"],
 		"sensor_type": "temperature",
 		"uom": "°C"
     }',
-    'Nicola Guerra'
+    'nicola guerra'
 );
+
 
 -- Humidità
 INSERT INTO component_events (
@@ -37,12 +41,15 @@ VALUES (
     'COMPONENT_CREATED',
     '{
         "component_type": "sensor",
-        "energy_consumption_value": 0.01,
-        "energy_consumption_uom": "kW",
+		"power": 0.15,
+        "power_uom": "kW",
+		"frequency": 2,
+		"frequency_uom": "sec",
+		"pub_topics": ["home/floor/1/room/living-room/sensors/temperature"],
 		"sensor_type": "humidity",
 		"uom": "%"
     }',
-    'Nicola Guerra'
+    'nicola guerra'
 );
 
 
@@ -60,11 +67,13 @@ VALUES (
     'COMPONENT_CREATED',
     '{
         "component_type": "actuator",
-        "energy_consumption_value": 0.20,
-        "energy_consumption_uom": "kW",
-		"actuator_type": "heater"
+        "power": 0.20,
+        "power_uom": "kW",
+		"actuator_type": "heater",
+		"sub_topics": ["home/floor/1/room/living-room/controllers/temperature"],
+		"pub_topics": ["home/floor/1/room/living-room/actuators/heater"]
     }',
-    'discovery-agent'
+    'nicola guerra'
 );
 
 -- Dehumidifier
@@ -79,11 +88,13 @@ VALUES (
     'COMPONENT_CREATED',
     '{
         "component_type": "actuator",
-        "energy_consumption_value": 0.20,
-        "energy_consumption_uom": "kW",
-		"actuator_type": "dehumidifier"
+        "power": 0.20,
+        "power_uom": "kW",
+		"actuator_type": "dehumidifier",
+		"sub_topics": ["home/floor/1/room/living-room/controllers/humidity"],
+		"pub_topics": ["home/floor/1/room/living-room/actuators/dehumidifier"]
     }',
-    'discovery-agent'
+    'nicola guerra'
 );
 
 -- Agenti

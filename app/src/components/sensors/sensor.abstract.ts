@@ -3,7 +3,9 @@
  * @brief Abstract class for sensors
  * @author Nicola Guerra
  */
-import { MqttConfig, type SensorConfig } from "../../utils";
+import { type Packet } from "mqtt";
+
+import { MqttConfig, type Logger, type SensorConfig } from "../../utils";
 import { Component } from "../component.abstract";
 import { RoomEnv } from "../../environments";
 
@@ -22,20 +24,32 @@ export abstract class Sensor extends Component {
 
 	// public methods --------------------------------------------------------------------------------
 
-	public start(): void {
+	public start(logger: Logger): void {
 		const { frequency, frequencyUom, topic } = this._config;
 		const frequencyConverted = this._timeUom.convert(frequency, frequencyUom);
 
 		setInterval(() => {
 			const payload = this._run();
-			this._mqttClient.publish(topic, JSON.stringify(payload));
-			this._logger.info({ payload }, "Published sensor value");
+			this._mqttClient.publish(topic, JSON.stringify(payload), (err, _) => {
+				if (err) {
+					logger.error({ err }, "Error during the publishing of sensor value");
+					return;
+				}
+				logger.info({ payload }, "Published sensor value");
+			});
 		}, frequencyConverted);
 	}
 
-	public stop(): void {
+	public stop(logger: Logger): void {
 		const { topic } = this._config;
-		this._mqttClient.unsubscribe(topic);
+		this._mqttClient.unsubscribe(topic, (err: any, _: any) => {
+			if (err) {
+				logger.error({ err }, `Couldn't unsubscribe from the topic ${topic}`)
+				return;
+			}
+
+			logger.info(`Successfully unsubscribed to the topic ${topic}`);
+		});
 	}
 
 	// protected methods -----------------------------------------------------------------------------

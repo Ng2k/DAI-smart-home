@@ -14,18 +14,19 @@ import type { IAgent } from "./agent.interface";
  * @class Agent
  */
 export abstract class Agent implements IAgent {
-	protected abstract readonly _topicToFunctionMap: Record<string, (message: string) => void>;
+	protected abstract readonly logger: Logger;
+	protected abstract readonly topicToFunctionMap: Record<string, (message: string) => void>;
 
 	constructor(
-		protected readonly _agentConfig: AgentConfig,
-		protected readonly _mqttConfig: MqttConfig,
-		protected readonly _mqttClient: MqttClient,
-		protected readonly _dbClient: Database
+		protected readonly config: AgentConfig,
+		protected readonly mqttConfig: MqttConfig,
+		protected readonly mqttClient: MqttClient,
+		protected readonly dbClient: Database
 	) { }
 
 	// public methods ------------------------------------------------------------------------------
 	public toJSON(): Record<string, any> {
-		return { ...this._agentConfig };
+		return { ...this.config };
 	}
 	public toString(): string {
 		return JSON.stringify(this.toJSON(), null, 2);
@@ -37,20 +38,20 @@ export abstract class Agent implements IAgent {
 	 * @details This method subscribes to the topics for the agent
 	 * @returns void
 	 */
-	protected _subscribeToTopics(logger: Logger): void {
-		const topics = this._agentConfig.sub_topics;
-		const type = this._agentConfig.type;
+	protected subscribeToTopics(logger: Logger): void {
+		const topics = this.config.sub_topics;
+		const type = this.config.type;
 
 		const logOpts = { topics, agent: '' };
 		if (type === AgentType.REGISTRY) logOpts.agent = AgentType.REGISTRY;
-		else logOpts.agent = `${type}/${(this._agentConfig as RoomConfig).room}`;
+		else logOpts.agent = `${type}/${(this.config as RoomConfig).room}`;
 
 		if (topics.length === 0) {
 			logger.warn({ ...logOpts }, "This agent has no topics to subscribed to");
 			return;
 		}
 
-		this._mqttClient.subscribe(topics, (err, granted) => {
+		this.mqttClient.subscribe(topics, (err, granted) => {
 			if (err) logger.error({ err }, "Error during subscription");
 			if (!granted) return;
 
@@ -62,13 +63,13 @@ export abstract class Agent implements IAgent {
 	 * @details This method starts the error listener for the MQTT client
 	 * @returns void
 	 */
-	protected _startErrorListener(logger: Logger): void {
-		this._mqttClient.on('error', (error) => {
+	protected startErrorListener(logger: Logger): void {
+		this.mqttClient.on('error', (error) => {
 			let msg = "";
 			const { code } = error as Record<string, any>;
 			if (code === "ECONNREFUSED") msg = "Connection error to the mqtt server";
 			logger.error(msg);
-			this._mqttClient.end();
+			this.mqttClient.end();
 		});
 	}
 	/**
@@ -76,16 +77,19 @@ export abstract class Agent implements IAgent {
 	 * @details This method starts the message listener for the MQTT client
 	 * @returns void
 	 */
-	protected _startMessageListener(logger: Logger): void {
-		this._mqttClient.on('message', (topic, message) => {
+	protected startMessageListener(logger: Logger): void {
+		this.mqttClient.on('message', (topic, message) => {
 			const payload = message.toString();
 			logger.debug({ topic, message: JSON.parse(payload) }, 'Message received');
 
-			const functionToCall = this._topicToFunctionMap[topic];
+			const functionToCall = this.topicToFunctionMap[topic];
 			if (!functionToCall) return;
 
 			functionToCall(payload);
-			logger.info({ payload: JSON.parse(payload) }, 'Operation for the topic completed successfully');
+			logger.info(
+				{ payload: JSON.parse(payload) },
+				'Operation for the topic completed successfully'
+			);
 		});
 	}
 }

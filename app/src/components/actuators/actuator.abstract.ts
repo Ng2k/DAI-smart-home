@@ -27,7 +27,7 @@ export abstract class Actuator extends Component {
 		this.mqttClient.subscribe(this.config.subTopics, (error, granted) => {
 			if (error) {
 				logger.error(
-					{ error },
+					{ error: error.stack },
 					"Error subscribing to topics"
 				);
 				return;
@@ -39,6 +39,8 @@ export abstract class Actuator extends Component {
 			'message',
 			(topic, message) => this._onMessage(topic, message.toString())
 		);
+
+		logger.info("Actuator started");
 	}
 
 	public stop(logger: Logger): void {

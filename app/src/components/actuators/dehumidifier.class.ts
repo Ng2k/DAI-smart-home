@@ -12,7 +12,15 @@ export class DehumidifierActuator extends Actuator {
 	constructor(config: ActuatorConfig, mqttConfig: MqttConfig, database: Database) {
 		super(config, mqttConfig, database)
 		this.logger = logger.child({ name: this.constructor.name, id: this.config.id });
-		this.logger.info("Dehumidifier actuator initialized.")
+		this.logger.info("Actuator initialized.")
+	}
+
+	//public methods -------------------------------------------------------------------------------
+	public override start(): void {
+		super.start(this.logger);
+	}
+	public override stop(): void {
+		super.stop(this.logger);
 	}
 
 	// protected methods ---------------------------------------------------------------------------

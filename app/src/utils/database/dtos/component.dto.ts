@@ -29,6 +29,8 @@ export interface SensorDTO extends ComponentDTO {
 
 export interface ActuatorDTO extends ComponentDTO {
 	actuator_type: string;
+	sub_topics: string[];
+	pub_topics: [string, string[]];
 }
 
 export interface AgentComponentsDTO {
@@ -44,19 +46,31 @@ export interface AgentComponentsDTO {
  * @return domain type
  */
 export const domainMapper = (dto: ComponentDTO): SensorConfig | ActuatorConfig => {
+	const baseConfig = {
+		id: dto.id,
+		power: dto.power,
+		powerUom: dto.power_uom
+	};
 	switch (dto.component_type) {
 		case "sensor":
+			const sensorDTO = dto as SensorDTO;
 			return {
-				id: dto.id,
-				type: (dto as SensorDTO).sensor_type,
-				uom: (dto as SensorDTO).uom,
-				power: dto.power,
-				powerUom: dto.power_uom,
-				subTopics: (dto as SensorDTO).sub_topics,
-				pubTopics: (dto as SensorDTO).pub_topics,
-				frequency: (dto as SensorDTO).frequency,
-				frequencyUom: (dto as SensorDTO).frequency_uom
+				...baseConfig,
+				type: sensorDTO.sensor_type,
+				uom: sensorDTO.uom,
+				subTopics: sensorDTO.sub_topics,
+				pubTopics: sensorDTO.pub_topics,
+				frequency: sensorDTO.frequency,
+				frequencyUom: sensorDTO.frequency_uom
 			} as SensorConfig;
+		case "actuator":
+			const actuatorDTO = dto as ActuatorDTO;
+			return {
+				...baseConfig,
+				type: actuatorDTO.actuator_type,
+				subTopics: actuatorDTO.sub_topics,
+				pubTopics: actuatorDTO.pub_topics
+			} as ActuatorConfig;
 		default:
 			return {
 				id: dto.id,

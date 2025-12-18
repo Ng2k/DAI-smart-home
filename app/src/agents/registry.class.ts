@@ -14,46 +14,49 @@ import { Agent } from "./agent.abstract";
  * @class RegistryAgent
  */
 export class RegistryAgent extends Agent {
-	private readonly _agents: Record<string, Record<string, string>> = {};
+	private readonly agents: Record<string, Record<string, string>> = {};
 
-	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
-	protected readonly _topicToFunctionMap: Record<string, (message: string) => void> = {
+	protected override readonly logger: Logger;
+	protected readonly topicToFunctionMap: Record<string, (message: string) => void> = {
 		[Topics.REGISTRY_AGENTS]: this._handleAgentRegistration.bind(this),
 	};
 
 	constructor(
-		agentConfig: RegistryConfig,
+		config: RegistryConfig,
 		mqttConfig: MqttConfig,
 		mqttClient: MqttClient,
 		dbClient: Database
 	) {
-		super(agentConfig, mqttConfig, mqttClient, dbClient);
-		super._subscribeToTopics(this._logger);
-		super._startErrorListener(this._logger);
-		super._startMessageListener(this._logger);
+		super(config, mqttConfig, mqttClient, dbClient);
 
-		this._logger.info(`Initializing ${agentConfig.type} agent`);
+		this.logger = logger.child({ name: this.constructor.name, id: this.config.id });
+
+		super.subscribeToTopics(this.logger);
+		super.startErrorListener(this.logger);
+		super.startMessageListener(this.logger);
+
+		this.logger.info(`Initializing ${config.type} agent`);
 	}
 
 	// private methods------------------------------------------------------------------------------
 	private _handleAgentRegistration(message: string): void {
 		const { id, name, type } = JSON.parse(message);
 		if (!id || !name || !type) {
-			this._logger.error({ message }, 'Invalid agent registration message');
+			this.logger.error({ message }, 'Invalid agent registration message');
 			return;
 		}
-		if (this._agents[id]) {
-			this._logger.error({ message }, 'Agent already registered');
+		if (this.agents[id]) {
+			this.logger.error({ message }, 'Agent already registered');
 			return;
 		}
-		this._agents[id] = { name, type };
-		this._logger.debug({ agents: this._agents }, 'Agents registered');
+		this.agents[id] = { name, type };
+		this.logger.debug({ agents: this.agents }, 'Agents registered');
 
 		const payload = JSON.stringify({ success: true, id });
-		const topic = this._agentConfig.pub_topics[0] || "";
-		this._mqttClient.publish(topic, payload, (err, _) => {
-			if (err) this._logger.error({ err }, "Error during the publishing");
-			this._logger.info("Agent successfully registered");
+		const topic = this.config.pub_topics[0] || "";
+		this.mqttClient.publish(topic, payload, (err, _) => {
+			if (err) this.logger.error({ err }, "Error during the publishing");
+			this.logger.info("Agent successfully registered");
 		});
 	}
 }

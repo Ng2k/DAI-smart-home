@@ -23,10 +23,8 @@ export class TemperatureSensor extends Sensor {
 	// public methods ------------------------------------------------------------------------------
 	public override start(): void {
 		super.start(this.logger, this.env.temperatureModel);
-		this.logger.info('Sensor started');
 	}
 	public override stop(): void {
 		super.stop(this.logger);
-		this.logger.info('Sensor stopped.');
 	}
 }

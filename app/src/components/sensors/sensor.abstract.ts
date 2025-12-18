@@ -33,7 +33,7 @@ export abstract class Sensor extends Component {
 					logger.error({ err }, "Error during the publishing of sensor value");
 					return;
 				}
-				logger.info({ payload }, "Published sensor value");
+				logger.debug({ payload }, "Published sensor value");
 				const result = this.database.insertReading(
 					this.config.id,
 					this.config.type,
@@ -41,6 +41,8 @@ export abstract class Sensor extends Component {
 				)
 			});
 		}, frequencyConverted);
+
+		logger.info("Sensor started");
 	}
 
 	public stop(logger: Logger): void {
@@ -51,7 +53,8 @@ export abstract class Sensor extends Component {
 				return;
 			}
 
-			logger.info(`Successfully unsubscribed to the topic ${subTopics}`);
+			logger.debug(`Successfully unsubscribed to the topic ${subTopics}`);
+			logger.info("Sensor stopped")
 		});
 	}
 

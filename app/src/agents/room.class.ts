@@ -6,73 +6,86 @@
 import { type MqttClient } from "mqtt";
 
 import { Agent } from "./agent.abstract.ts";
-import { logger, domainMapper } from "../utils/index.ts";
-import type { Database, Logger, MqttConfig, RoomConfig, SensorConfig, SensorDTO } from "../utils/index.ts";
+import {
+	ActuatorType,
+	logger, domainMapper,
+	SensorType } from "../utils/index.ts";
+import type {
+	ActuatorDTO, SensorDTO,
+	Database, Logger, MqttConfig, RoomConfig, SensorConfig, ActuatorConfig
+} from "../utils/index.ts";
 import type { RoomEnv } from "../environments/room_env.ts";
-import { Actuator, HumiditySensor, RoomOrchestrator, Sensor, Controller, TemperatureSensor } from "../components/index.ts";
+import {
+	Actuator, Sensor, Controller, RoomOrchestrator,
+	HumiditySensor, TemperatureSensor, HeaterActuator, DehumidifierActuator
+} from "../components/index.ts";
 
 /**
  * @brief Room agent class
  * @class RoomAgent
  */
 export class RoomAgent extends Agent {
-	protected override readonly _topicToFunctionMap: Record<string, (message: string) => void> = {}
+	protected override logger: Logger;
+	protected override readonly topicToFunctionMap: Record<string, (message: string) => void> = {}
 
-	private _sensors: Sensor[] = [];
-	private _actuators: Actuator[] = [];
-	private _controllers: Controller[] = [];
-	private _orchestrator: RoomOrchestrator | null = null;
-	private readonly _logger: Logger = logger.child({ name: this.constructor.name });
+	private environment: RoomEnv;
+	private sensors: Sensor[] = [];
+	private actuators: Actuator[] = [];
+	private controllers: Controller[] = [];
+	private orchestrator: RoomOrchestrator | null = null;
 
 	constructor(
-		agentConfig: RoomConfig,
+		config: RoomConfig,
 		mqttConfig: MqttConfig,
 		mqttClient: MqttClient,
 		dbClient: Database,
-		private readonly _environment: RoomEnv
+		environment: RoomEnv
 	) {
-		super(agentConfig, mqttConfig, mqttClient, dbClient);
+		super(config, mqttConfig, mqttClient, dbClient);
 
-		this._logger.info(
-			{ agent: `${agentConfig.type}/${agentConfig.room}` },
+		this.logger = logger.child({ name: this.constructor.name, id: this.config.id });
+		this.environment = environment;
+
+		super.startErrorListener(this.logger);
+		super.startMessageListener(this.logger);
+		this.subscribeToTopics();
+
+		this.logger.info(
+			{ agent: `${config.type}/${config.room}` },
 			"Initializing room agent"
 		);
-
-		super._startErrorListener(this._logger);
-		super._startMessageListener(this._logger);
-		this._subscribeToTopics();
 	}
 
 	//public methods -------------------------------------------------------------------------------
 	public async start(): Promise<void> {
-		const dto = await this._dbClient.getAgentComponents(this._agentConfig.id);
+		const dto = await this.dbClient.getAgentComponents(this.config.id);
 		const { sensors, actuators, controllers, orchestrator } = dto;
 
 		// sensors
-		this._sensors = sensors.reduce((acc: Sensor[], sensorDTO: SensorDTO) => {
+		this.sensors = sensors.reduce((acc: Sensor[], sensorDTO: SensorDTO) => {
 			const config = domainMapper(sensorDTO) as SensorConfig;
 			let sensor;
 			switch (config.type) {
-				case 'temperature':
+				case SensorType.TEMPERATURE:
 					sensor = new TemperatureSensor(
 						config,
-						this._mqttConfig,
-						this._dbClient,
-						this._environment
+						this.mqttConfig,
+						this.dbClient,
+						this.environment
 					);
 					sensor.start();
 					break;
-				case 'humidity':
+				case SensorType.HUMIDITY:
 					sensor = new HumiditySensor(
 						config,
-						this._mqttConfig,
-						this._dbClient,
-						this._environment
+						this.mqttConfig,
+						this.dbClient,
+						this.environment
 					);
 					sensor.start();
 					break;
 				default:
-					this._logger.warn(
+					this.logger.warn(
 						{ type: config.type },
 						"Sensor type is not implemented in the system"
 					);
@@ -81,17 +94,45 @@ export class RoomAgent extends Agent {
 		}, []);
 
 		// actuators
+		this.actuators = actuators.reduce((acc: Actuator[], actuatorsDTO: ActuatorDTO) => {
+			const config = domainMapper(actuatorsDTO) as ActuatorConfig;
+			let actuator;
+			switch (config.type) {
+				case ActuatorType.HEATER:
+					actuator = new HeaterActuator(
+						config,
+						this.mqttConfig,
+						this.dbClient
+					);
+					actuator.start();
+					break;
+				case ActuatorType.DEHUMIDIFIER:
+					actuator = new DehumidifierActuator(
+						config,
+						this.mqttConfig,
+						this.dbClient,
+					);
+					actuator.start();
+					break;
+				default:
+					this.logger.warn(
+						{ type: config.type },
+						"Actuator type is not implemented in the system"
+					);
+			}
+			return acc;
+		}, []);
 		// controllers
 		// orchestrator
 
 		//Update the env simulation
 		setInterval(() => {
-			this._environment.update(1);
+			this.environment.update(1);
 		}, 500);
 	}
 
 	// protected methods ---------------------------------------------------------------------------
-	protected override _subscribeToTopics(): void {
-		super._subscribeToTopics(this._logger);
+	protected override subscribeToTopics(): void {
+		super.subscribeToTopics(this.logger);
 	}
 }

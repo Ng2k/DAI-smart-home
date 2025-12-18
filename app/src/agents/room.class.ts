@@ -54,11 +54,21 @@ export class RoomAgent extends Agent {
 			let sensor;
 			switch (config.type) {
 				case 'temperature':
-					sensor = new TemperatureSensor(config, this._mqttConfig, this._environment);
+					sensor = new TemperatureSensor(
+						config,
+						this._mqttConfig,
+						this._dbClient,
+						this._environment
+					);
 					sensor.start();
 					break;
 				case 'humidity':
-					sensor = new HumiditySensor(config, this._mqttConfig, this._environment);
+					sensor = new HumiditySensor(
+						config,
+						this._mqttConfig,
+						this._dbClient,
+						this._environment
+					);
 					sensor.start();
 					break;
 				default:

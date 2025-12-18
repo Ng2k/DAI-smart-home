@@ -11,11 +11,11 @@ BEGIN
         END IF;
 
         INSERT INTO readings (
-            component_id, category, type, value, status, uom,
+            component_id, type, value, status, uom,
             created_at, created_by
         )
         VALUES (
-            NEW.component_id, NEW.category, NEW.type,
+            NEW.component_id, NEW.category,
             NEW.value, NEW.status, NEW.uom,
             NEW.created_at, NEW.created_by
         );
@@ -23,7 +23,7 @@ BEGIN
         RETURN NEW;
 
     EXCEPTION WHEN OTHERS THEN
-        INSERT INTO readings (
+        INSERT INTO reading_events_deadletter (
             event_id, component_id, category, type,
             value, status, uom, created_at, created_by, error_message
         )
@@ -41,9 +41,9 @@ $$ LANGUAGE plpgsql;
 -- TRIGGER READINGS
 -- =========================================================
 
-DROP TRIGGER IF EXISTS trg_apply_reading_event ON readings_events;
+DROP TRIGGER IF EXISTS trg_apply_reading_event ON reading_events;
 
 CREATE TRIGGER trg_apply_reading_event
-AFTER INSERT ON readings_events
+AFTER INSERT ON reading_events
 FOR EACH ROW
 EXECUTE FUNCTION apply_reading_event();

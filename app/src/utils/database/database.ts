@@ -76,4 +76,27 @@ export class Database {
 		const results = await this._client.file(query, [id]);
 		return results.values().toArray()[0].components;
 	}
+
+	/**
+	 * @brief Insert the component reading into the database
+	 * @param id {string} Component unique identifier
+	 * @param component {string} Type of the component (sensor, actuator, controller...)
+	 * @param payload {{ value: number, uom: string, created_by: string }} Reading
+	 * @returns {Promise<void>} Echo of the record
+	 */
+	public async insertReading(
+		id: string,
+		component: string,
+		payload: { value: number, uom: string, created_by: string }
+	): Promise<object> {
+		let query = `${this._queryDir}/insert_reading.sql`;
+		const { value, uom, created_by } = payload;
+		await this._client.file(query, [id, component, value, uom, created_by]);
+		this._logger.info({ id, component }, "Component reading saved to database");
+
+		query = `${this._queryDir}/get_reading.sql`;
+		const results = await this._client.file(query, [id]);
+		const row = results.values().toArray()[0]; this._logger.debug({ id, component, row }, "Reading saved");
+		return row;
+	}
 };

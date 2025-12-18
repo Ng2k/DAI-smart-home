@@ -5,20 +5,23 @@
  */
 import mqtt, { type MqttClient } from "mqtt";
 
-import { MqttConfig, TimeUom, type Logger } from "../utils";
+import { Database, MqttConfig, TimeUom, type Logger } from "../utils";
 import type { IComponent } from "./component.interface";
+import type { IModel } from "../environments";
 
 export abstract class Component implements IComponent {
-	protected readonly _mqttClient: MqttClient;
-	protected readonly _timeUom: TimeUom = new TimeUom();
+	protected readonly database: Database;
+	protected readonly mqttClient: MqttClient;
+	protected readonly timeUom: TimeUom = new TimeUom();
 
-	constructor(_mqttConfigs: MqttConfig) {
-		this._mqttClient = mqtt.connect(_mqttConfigs.url, {
-			username: _mqttConfigs.username,
-			password: _mqttConfigs.password
+	constructor(mqttConfigs: MqttConfig, database: Database) {
+		this.database = database;
+		this.mqttClient = mqtt.connect(mqttConfigs.url, {
+			username: mqttConfigs.username,
+			password: mqttConfigs.password
 		});
 	}
 
-	public abstract start(logger: Logger): void;
+	public abstract start(logger: Logger, envModel: IModel): void;
 	public abstract stop(logger: Logger): void;
 }

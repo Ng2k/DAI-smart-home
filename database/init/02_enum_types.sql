@@ -8,6 +8,12 @@ BEGIN
         CREATE TYPE agent_event_type AS ENUM (
             'AGENT_CREATED'
         );
+	END IF;
+
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'reading_event_type') THEN
+        CREATE TYPE reading_event_type AS ENUM (
+            'READING_CREATED'
+        );
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'agent_type') THEN

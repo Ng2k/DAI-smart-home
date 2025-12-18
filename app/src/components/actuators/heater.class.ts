@@ -3,15 +3,16 @@
  * @file heater.class.ts
  * @author Nicola Guerra
  */
-import { logger, MqttConfig, type Logger, type ActuatorConfig } from "../../utils"
+import { logger, Database, MqttConfig, type Logger, type ActuatorConfig } from "../../utils"
 import { Actuator } from "./actuator.abstract";
 
 export class HeaterActuator extends Actuator {
-	protected readonly _logger: Logger = logger.child({ name: this.constructor.name });
+	protected readonly logger: Logger;
 
-	constructor(config: ActuatorConfig, mqttConfig: MqttConfig) {
-		super(config, mqttConfig)
-		this._logger.info({}, 'Heater actuator initialized.')
+	constructor(config: ActuatorConfig, mqttConfig: MqttConfig, database: Database) {
+		super(config, mqttConfig, database);
+		this.logger = logger.child({ name: this.constructor.name, id: this.config.id });
+		this.logger.info("Heater actuator initialized.");
 	}
 
 	// protected methods ---------------------------------------------------------------------------
@@ -22,17 +23,12 @@ export class HeaterActuator extends Actuator {
 	 * @returns void
 	 */
 	protected _onMessage(topic: string, message: string): void {
+		this.logger.debug({ topic }, "Message received from controller");
+
 		const { heater: value } = JSON.parse(message);
-		const { room, type } = this._config;
-		this._logger.debug({ topic, value }, `Message received from controller`);
+		this.logger.info(`Heater turned ${value ? "on" : "off"}`);
 
-		this._logger.info({}, 'Actuator is executing...');
-
-		const { topic: { publish } } = this._config;
-		this._mqttClient.publish(publish, JSON.stringify({ ack: true, value }))
-		this._logger.debug(
-			{ publish },
-			`Actuator ${room}/${type} has executed command from controller`
-		)
+		this.mqttClient.publish(this.config.pubTopics[0], JSON.stringify({ ack: true, value }));
+		this.logger.debug("Published ACK");
 	}
 }

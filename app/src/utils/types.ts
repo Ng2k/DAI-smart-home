@@ -94,6 +94,8 @@ export type ActuatorConfig = {
 	type: ActuatorType;
 	power: number;
 	powerUom: string;
+	subTopics: string[];
+	pubTopics: [string, string[]];
 };
 
 /**
@@ -123,6 +125,11 @@ export type Objectives = {
 		}
 	}
 };
+
+
+
+
+
 
 
 

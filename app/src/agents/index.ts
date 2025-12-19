@@ -1,2 +1,2 @@
-export { RoomAgent } from './room.class';
-export { RegistryAgent } from './registry.class';
+export { RoomAgent } from '@/agents/room.class';
+export { RegistryAgent } from '@/agents/registry.class';

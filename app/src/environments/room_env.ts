@@ -3,7 +3,7 @@
  * @file room_env.ts
  * @author Nicola Guerra
  */
-import { TemperatureModel, HumidityModel } from "./models/";
+import { TemperatureModel, HumidityModel } from "@/environments/models/";
 
 /**
  * @brief Class for handling room environments

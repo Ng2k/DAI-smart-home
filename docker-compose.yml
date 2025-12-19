@@ -5,10 +5,12 @@ services:
             dockerfile: Dockerfile
         container_name: app
         env_file:
-            - ./app/.env
+            - ./app/.env.development
         environment:
             - DOCKER_BUILDKIT=1
+            - NODE_ENV=development
         networks:
+            - database_network
             - mqtt_network
 
     mqtt:

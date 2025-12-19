@@ -3,7 +3,7 @@
  * @file mqttConfig.ts
  * @author Nicola Guerra
  */
-import { logger, type Logger } from "./logger"
+import { logger, type Logger } from "@/utils/logger"
 
 export class MqttConfig {
 	// public properties -----------------------------------------------------------------------------

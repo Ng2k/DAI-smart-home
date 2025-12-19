@@ -3,8 +3,8 @@
  * @file temperature_model.class.ts
  * @author Nicola Guerra
  */
-import type { TemperatureModelConfig } from "./temperature_config.type.ts";
-import type { IModel } from "../model.interface.ts";
+import type { TemperatureModelConfig } from "@/environments/models/temperature/temperature_config.type.ts";
+import type { IModel } from "@/environments/models/model.interface.ts";
 
 /**
  * @brief class for the temperature Model

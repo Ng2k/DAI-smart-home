@@ -4,7 +4,14 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"start": "bun run src/index.ts"
+		"build": "bun build index.ts --outdir dist --target bun --sourcemap",
+		"app:local": "bun run --env-file=.env.local index.ts",
+		"app:docker": "docker compose up app -d --build",
+		"app:docker:down": "docker compose down app",
+		"docker": "docker compose up -d",
+		"docker:build": "docker compose up -d --build",
+		"docker:down": "docker compose down",
+		"test": "bun test"
 	},
 	"devDependencies": {
 		"@types/bun": "^1.3.1",

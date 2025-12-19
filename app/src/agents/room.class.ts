@@ -5,20 +5,18 @@
  */
 import { type MqttClient } from "mqtt";
 
-import { Agent } from "./agent.abstract.ts";
-import {
-	ActuatorType,
-	logger, domainMapper,
-	SensorType } from "../utils/index.ts";
+import { Agent } from "@/agents/agent.abstract.ts";
+import { SensorType, ActuatorType, logger, domainMapper } from "@/utils/";
 import type {
 	ActuatorDTO, SensorDTO,
-	Database, Logger, MqttConfig, RoomConfig, SensorConfig, ActuatorConfig
-} from "../utils/index.ts";
-import type { RoomEnv } from "../environments/room_env.ts";
+	Database, Logger, MqttConfig,
+	RoomConfig, SensorConfig, ActuatorConfig
+} from "@/utils/";
+import type { RoomEnv } from "@/environments";
 import {
 	Actuator, Sensor, Controller, RoomOrchestrator,
 	HumiditySensor, TemperatureSensor, HeaterActuator, DehumidifierActuator
-} from "../components/index.ts";
+} from "@/components";
 
 /**
  * @brief Room agent class

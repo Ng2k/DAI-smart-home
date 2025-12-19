@@ -3,7 +3,7 @@
  * @file timeUom.class.ts
  * @author Nicola Guerra
  */
-import { Uom } from "./enums";
+import { Uom } from "@/utils/enums";
 
 /**
  * @brief Time unit of measure class

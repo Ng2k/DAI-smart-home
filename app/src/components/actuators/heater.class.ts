@@ -3,24 +3,16 @@
  * @file heater.class.ts
  * @author Nicola Guerra
  */
-import { logger, Database, MqttConfig, type Logger, type ActuatorConfig } from "../../utils"
-import { Actuator } from "./actuator.abstract";
+import { logger, Database, MqttConfig, type Logger, type ActuatorConfig } from "@/utils"
+import { Actuator } from "@/components/actuators/actuator.abstract";
 
 export class HeaterActuator extends Actuator {
-	protected readonly logger: Logger;
+	protected override readonly logger: Logger;
 
 	constructor(config: ActuatorConfig, mqttConfig: MqttConfig, database: Database) {
 		super(config, mqttConfig, database);
 		this.logger = logger.child({ name: this.constructor.name, id: this.config.id });
 		this.logger.info("Actuator initialized.");
-	}
-
-	//public methods -------------------------------------------------------------------------------
-	public override start(): void {
-		super.start(this.logger);
-	}
-	public override stop(): void {
-		super.stop(this.logger);
 	}
 
 	// protected methods ---------------------------------------------------------------------------

@@ -5,9 +5,9 @@
  */
 import type { MqttClient } from "mqtt";
 
-import { logger, Topics } from "../utils";
-import type { Logger, MqttConfig, RegistryConfig, Database } from "../utils";
-import { Agent } from "./agent.abstract";
+import { logger, Topics } from "@/utils";
+import type { Logger, MqttConfig, RegistryConfig, Database } from "@/utils";
+import { Agent } from "@/agents/agent.abstract";
 
 /**
  * @brief Registry agent class

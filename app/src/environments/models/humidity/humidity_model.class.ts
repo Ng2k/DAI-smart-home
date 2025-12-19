@@ -3,8 +3,8 @@
  * @file humidity_model.class.ts
  * @author Nicola Guerra
  */
-import type { IModel } from "../model.interface.ts";
-import type { HumidityModelConfig } from "./humidity_config.type.ts";
+import type { IModel } from "@/environments/models/model.interface.ts";
+import type { HumidityModelConfig } from "@/environments/models/humidity/humidity_config.type.ts";
 
 /**
  * @class HumidityModel

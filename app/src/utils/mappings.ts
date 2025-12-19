@@ -8,9 +8,9 @@ import {
 	Actuator, HeaterActuator, DehumidifierActuator,
 	Controller, TemperatureController, HumidityController,
 	Sensor, TemperatureSensor, HumiditySensor,
-} from "../components";
-import { ActuatorType, ControllerType, SensorType } from "./enums";
-import { type IModel, TemperatureModel } from "../environments";
+} from "@/components";
+import { ActuatorType, ControllerType, SensorType } from "@/utils/enums";
+import { type IModel, TemperatureModel } from "@/environments";
 
 /**
  * @brief Controller type to class mapping

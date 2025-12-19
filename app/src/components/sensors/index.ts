@@ -1,3 +1,3 @@
-export * from "./sensor.abstract";
-export * from "./temperature.class";
-export * from "./humidity.class";
+export * from "@/components/sensors/sensor.abstract";
+export * from "@/components/sensors/temperature.class";
+export * from "@/components/sensors/humidity.class";

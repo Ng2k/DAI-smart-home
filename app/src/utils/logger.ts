@@ -1,44 +1,56 @@
-import pino from 'pino';
-import type { Logger } from 'pino';
+import pino, { type Logger } from 'pino';
 
-const logger_options_dev = {
+const NODE_ENV = Bun.env.NODE_ENV || 'production';
+const LOG_LEVEL = Bun.env.LOG_LEVEL || 'info';
+const LOG_TARGET = Bun.env.LOG_TARGET || 'stdout';
+const LOG_FILE = Bun.env.LOG_FILE || './logs/app.log';
+
+const isDev = ['development', 'local', 'test'].includes(NODE_ENV);
+const isDockerFileLog = LOG_TARGET === 'file';
+
+const devOptions = {
 	transport: {
 		target: 'pino-pretty',
 		options: {
-			colorize: true
-		}
-	}
-}
-
-const logger_options_prod = {
-	level: Bun.env.LOG_LEVEL || 'info',
-	timestamp: () => `,"timestamp":"${new Date(Date.now()).toISOString()}"`,
-	formatters: {
-		bindings: () => {
-			return { bun_version: Bun.version };
+			colorize: true,
 		},
 	},
+};
+
+const prodStdoutOptions = {
+	timestamp: pino.stdTimeFunctions.isoTime,
+	formatters: {
+		bindings: () => ({ bun_version: Bun.version }),
+	},
+};
+
+const prodFileOptions = {
+	...prodStdoutOptions,
 	transport: {
 		targets: [
 			{
 				target: 'pino/file',
 				options: {
-					destination: Bun.env.LOG_FILE || './logs/app.log',
+					destination: LOG_FILE,
 				},
-			}
-		]
-	}
-}
+			},
+		],
+	},
+};
 
-const dev_env = ['dev', 'local', 'test'];
-
-export const logger = pino({
-	level: Bun.env.LOG_LEVEL || 'info',
-	...(dev_env.includes(Bun.env.NODE_ENV || '') ? logger_options_dev : logger_options_prod),
+export const logger: Logger = pino({
+	...(isDev
+		? devOptions
+		: isDockerFileLog
+			? prodFileOptions
+			: prodStdoutOptions),
+	level: LOG_LEVEL,
 	redact: {
 		paths: [],
 		censor: '[PINO REDACTED]',
 		remove: true,
 	},
 });
+
 export type { Logger };
+

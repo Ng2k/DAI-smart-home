@@ -12,7 +12,7 @@ import type { RoomEnv } from "../../environments";
  * @class Sensor
  */
 export class TemperatureSensor extends Sensor {
-	protected readonly logger: Logger;
+	protected override readonly logger: Logger;
 
 	constructor(config: SensorConfig, mqttConfig: MqttConfig, database: Database, env: RoomEnv) {
 		super(config, mqttConfig, database, env);
@@ -20,11 +20,11 @@ export class TemperatureSensor extends Sensor {
 		this.logger.info({ sensor_id: this.config.id }, 'Sensor Initialized.');
 	}
 
-	// public methods ------------------------------------------------------------------------------
-	public override start(): void {
-		super.start(this.logger, this.env.temperatureModel);
-	}
-	public override stop(): void {
-		super.stop(this.logger);
+	// protected methods ---------------------------------------------------------------------------
+	protected run(): { value: number, uom: string } {
+		return {
+			value: this.env.temperatureModel.getValue(),
+			uom: this.config.uom
+		};
 	}
 }

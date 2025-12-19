@@ -4,7 +4,7 @@
  * @author Nicola Guerra
  */
 
-import type { AgentType, SensorType, EnergyMode, Uom, ControllerType, ActuatorType } from "./enums";
+import type { AgentType, SensorType, EnergyMode, ControllerType, ActuatorType } from "@/utils/enums";
 
 /**
  * @brief Registry configuration type
@@ -125,6 +125,8 @@ export type Objectives = {
 		}
 	}
 };
+
+
 
 
 

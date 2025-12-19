@@ -5,9 +5,9 @@
  */
 import { type MqttClient } from "mqtt";
 
-import { AgentType } from "../utils";
-import type { Logger, AgentConfig, Database, MqttConfig, RoomConfig } from "../utils"
-import type { IAgent } from "./agent.interface";
+import { AgentType } from "@/utils";
+import type { Logger, AgentConfig, Database, MqttConfig, RoomConfig } from "@/utils"
+import type { IAgent } from "@/agents/agent.interface";
 
 /**
  * @brief Agent abstract class

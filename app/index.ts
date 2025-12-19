@@ -1,10 +1,11 @@
 import mqtt from "mqtt";
 
-import { logger, MqttConfig, Database, type RoomConfig } from "./utils";
-import { RoomAgent, RegistryAgent } from "./agents";
-import roomsEnv from "../config/rooms_env.json";
-import { RoomEnv, TemperatureModel, HumidityModel } from "./environments";
-import type { TemperatureModelConfig, HumidityModelConfig } from "./environments";
+import { logger, MqttConfig, Database, type RoomConfig } from "@/utils";
+import { RoomAgent, RegistryAgent } from "@/agents";
+import { RoomEnv, TemperatureModel, HumidityModel } from "@/environments";
+import type { TemperatureModelConfig, HumidityModelConfig } from "@/environments";
+
+import roomsEnv from "./config/rooms_env.json";
 
 async function main(): Promise<void> {
 	logger.info("Starting the application");

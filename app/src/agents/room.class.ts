@@ -1,136 +1,116 @@
 /**
- * @brief Room agent class file for the project
+ * @brief Room agent
  * @file room.class.ts
  * @author Nicola Guerra
  */
-import { type MqttClient } from "mqtt";
+import type { MqttClient } from "mqtt";
 
-import { Agent } from "@/agents/agent.abstract.ts";
-import { SensorType, ActuatorType, logger, domainMapper } from "@/utils/";
-import type {
-	ActuatorDTO, SensorDTO,
-	Database, Logger, MqttConfig,
-	RoomConfig, SensorConfig, ActuatorConfig
-} from "@/utils/";
-import type { RoomEnv } from "@/environments";
-import {
-	Actuator, Sensor, Controller, RoomOrchestrator,
-	HumiditySensor, TemperatureSensor, HeaterActuator, DehumidifierActuator
-} from "@/components";
+import { logger, type Logger } from "@/libs/logger.ts";
+import { Sensor, Actuator, type SensorMetadata } from "@/components";
 
-/**
- * @brief Room agent class
- * @class RoomAgent
- */
-export class RoomAgent extends Agent {
-	protected override logger: Logger;
-	protected override readonly topicToFunctionMap: Record<string, (message: string) => void> = {}
+export class RoomAgent {
+	protected readonly logger: Logger;
 
-	private environment: RoomEnv;
-	private sensors: Sensor[] = [];
-	private actuators: Actuator[] = [];
-	private controllers: Controller[] = [];
-	private orchestrator: RoomOrchestrator | null = null;
+	private orchestratorCommand: Record<string, boolean> = { heater: false, dehumidifier: false };
+	private actuatorState: {
+		heater: { curr: boolean, next: boolean },
+		dehumidifier: { curr: boolean, next: boolean }
+	} = {
+			heater: { curr: false, next: false },
+			dehumidifier: { curr: false, next: false }
+		};
 
 	constructor(
-		config: RoomConfig,
-		mqttConfig: MqttConfig,
-		mqttClient: MqttClient,
-		dbClient: Database,
-		environment: RoomEnv
+		private readonly id: string,
+		private readonly name: string,
+		private readonly sensors: Sensor[],
+		private readonly actuators: Actuator[],
+		private readonly mqtt: MqttClient
 	) {
-		super(config, mqttConfig, mqttClient, dbClient);
+		this.logger = logger.child({ name: this.constructor.name, id: this.id })
+		if (!id.trim()) this.logger.error({ id }, "Invalid room id");
 
-		this.logger = logger.child({ name: this.constructor.name, id: this.config.id });
-		this.environment = environment;
+		sensors.forEach(sensor => sensor.start());
 
-		super.startErrorListener(this.logger);
-		super.startMessageListener(this.logger);
-		this.subscribeToTopics();
+		const roomTopic = `room/${id}`;
+		const topics = [`${roomTopic}/sensors/+`, `${roomTopic}/actuators/+/ack`];
 
-		this.logger.info(
-			{ agent: `${config.type}/${config.room}` },
-			"Initializing room agent"
-		);
-	}
-
-	//public methods -------------------------------------------------------------------------------
-	public async start(): Promise<void> {
-		const dto = await this.dbClient.getAgentComponents(this.config.id);
-		const { sensors, actuators, controllers, orchestrator } = dto;
-
-		// sensors
-		this.sensors = sensors.reduce((acc: Sensor[], sensorDTO: SensorDTO) => {
-			const config = domainMapper(sensorDTO) as SensorConfig;
-			let sensor;
-			switch (config.type) {
-				case SensorType.TEMPERATURE:
-					sensor = new TemperatureSensor(
-						config,
-						this.mqttConfig,
-						this.dbClient,
-						this.environment
-					);
-					sensor.start();
-					break;
-				case SensorType.HUMIDITY:
-					sensor = new HumiditySensor(
-						config,
-						this.mqttConfig,
-						this.dbClient,
-						this.environment
-					);
-					sensor.start();
-					break;
-				default:
-					this.logger.warn(
-						{ type: config.type },
-						"Sensor type is not implemented in the system"
-					);
+		this.mqtt.subscribe(topics, (error, granted) => {
+			if (error) {
+				this.logger.error({ error }, "Error during subscription to topics");
+				return;
 			}
-			return acc;
-		}, []);
 
-		// actuators
-		this.actuators = actuators.reduce((acc: Actuator[], actuatorsDTO: ActuatorDTO) => {
-			const config = domainMapper(actuatorsDTO) as ActuatorConfig;
-			let actuator;
-			switch (config.type) {
-				case ActuatorType.HEATER:
-					actuator = new HeaterActuator(
-						config,
-						this.mqttConfig,
-						this.dbClient
-					);
-					actuator.start();
-					break;
-				case ActuatorType.DEHUMIDIFIER:
-					actuator = new DehumidifierActuator(
-						config,
-						this.mqttConfig,
-						this.dbClient,
-					);
-					actuator.start();
-					break;
-				default:
-					this.logger.warn(
-						{ type: config.type },
-						"Actuator type is not implemented in the system"
-					);
+			this.logger.debug({ granted }, `Room subscribed to sensor topics`);
+		})
+
+		this.mqtt.on("message", (topic, payload) => {
+			const { value } = JSON.parse(payload.toString());
+			this.logger.debug({ topic, payload: { value } }, "Message received from topic");
+
+			const { heater, dehumidifier } = this.actuatorState;
+			if (topic === `${roomTopic}/actuators/heater/ack`) {
+				heater.curr = value;
 			}
-			return acc;
-		}, []);
-		// controllers
-		// orchestrator
+			if (topic === `${roomTopic}/actuators/dehumidifier/ack`) {
+				dehumidifier.curr = value;
+			}
 
-		//Update the env simulation
-		setInterval(() => {
-			this.environment.update(1);
-		}, 500);
-	}
+			if (topic === `${roomTopic}/sensors/temperature`) {
+				const state = this.actuatorState.heater;
+				sensors.forEach(async sensor => {
+					if (sensor.config.name !== "temperature") return;
 
-	// protected methods ---------------------------------------------------------------------------
-	protected override subscribeToTopics(): void {
-		super.subscribeToTopics(this.logger);
+					const metadata = sensor.config.metadata as SensorMetadata;
+					if (value < metadata.initial_value) state.next = true;
+					if (value > metadata.max_value) state.next = false;
+
+					if (state.curr === state.next) return;
+
+					this.mqtt.publish(
+						`${roomTopic}/actuators/heater`,
+						JSON.stringify({ value: state.next }),
+						(error, _) => {
+							if (error) {
+								this.logger.error({ error }, "Error during publishing");
+								return;
+							}
+							this.logger.info(
+								{ topic: `${roomTopic}/actuators/heater`, value: state.next },
+								"Message published"
+							);
+						}
+					);
+				})
+			}
+
+			if (topic === `${roomTopic}/sensors/humidity`) {
+				const state = this.actuatorState.heater;
+				sensors.forEach(async sensor => {
+					if (sensor.config.name !== "humidity") return;
+
+					const metadata = sensor.config.metadata as SensorMetadata;
+					if (value < metadata.initial_value) state.next = false;
+					if (value > metadata.max_value) state.next = true;
+
+					if (state.curr === state.next) return;
+
+					this.mqtt.publish(
+						`${roomTopic}/actuators/dehumidifier`,
+						JSON.stringify({ value: state.next }),
+						(error, _) => {
+							if (error) {
+								this.logger.error({ error }, "Error during publishing");
+								return;
+							}
+							this.logger.info(
+								{ topic: `${roomTopic}/actuators/dehumidifier`, value: state.next },
+								"Message published"
+							);
+						}
+					);
+				})
+			}
+		});
 	}
 }

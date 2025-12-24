@@ -1,6 +1,1 @@
--- =========================================================
--- EXTENSIONS
--- =========================================================
-
--- UUID generation support
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+create extension if not exists pgcrypto;

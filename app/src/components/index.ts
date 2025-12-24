@@ -1,4 +1,3 @@
-export * from "@/components/sensors";
-export * from "@/components/controllers";
-export * from "@/components/actuators";
-export * from "@/components/orchestrators";
+export * from "@/components/component.class.ts";
+export * from "@/components/sensor.class.ts";
+export * from "@/components/actuator.class.ts";

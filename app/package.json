@@ -5,7 +5,7 @@
 	"private": true,
 	"scripts": {
 		"build": "bun build index.ts --outdir dist --target bun --sourcemap",
-		"app:local": "bun run --env-file=.env.local index.ts",
+		"app:local": "bun run --env-file=./envs/.local.env index.ts",
 		"app:docker": "docker compose up app -d --build",
 		"app:docker:down": "docker compose down app",
 		"docker": "docker compose up -d",

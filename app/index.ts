@@ -9,9 +9,10 @@ import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { logger } from "@/libs/logger.ts";
 import { Mqtt } from "@/libs/mqtt.ts";
 import { components, users, rooms } from "@/db/schema.ts";
-import { RoomAgent } from "@/agents";
+import { RoomAgent, Orchestrator } from "@/agents";
 import { Sensor, Actuator } from "@/components";
 import type { ComponentConfig, SensorMetadata } from "@/components";
+import mqtt from 'mqtt';
 
 const getAllRooms = async (db: NodePgDatabase, userId: string): Promise<any> => {
 	try {
@@ -96,6 +97,7 @@ const main = async () => {
 	}
 
 	const rooms = await instantiateRooms(await getAllRooms(db, user.id));
+	const orchestrator = new Orchestrator("", await Mqtt.getInstance().createClient(""));
 };
 
 main();

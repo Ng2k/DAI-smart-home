@@ -22,7 +22,7 @@ export class Orchestrator {
 		this.logger = logger.child({ name: this.constructor.name, id: this.id });
 		if (!id.trim()) this.logger.error({ id }, "Invalid room id");
 
-		const topics = ["rooms/+/sensors/+", "rooms/+/actuators/+"];
+		const topics = ["room/+/sensors/+", "room/+/actuators/+/ack"];
 		this.mqtt.subscribe(topics, (error, granted) => {
 			if (error) {
 				this.logger.error({ error }, "Error during subscription to topics");
@@ -33,9 +33,18 @@ export class Orchestrator {
 		});
 
 		this.mqtt.on("message", (topic, payload) => {
-			const component = topic.split("/+").pop()
-			if ()
+			const body = JSON.parse(payload.toString());
+			const topicSplit = topic.split("/");
+			if (topicSplit.find(value => value === "actuators")) {
+				this.logger.debug({ payload: body }, "Message received.");
+				if (body.value) this.currentDevices++;
+				else this.currentDevices--;
+			}
 		});
+
+		const interval = setInterval(() => {
+			this.logger.debug(`Current actuators ON: ${this.currentDevices}`);
+		}, 5000);
 		//TODO: controllare i threshold
 		//TODO: forzare le policy
 	}

@@ -11,7 +11,6 @@ import { Sensor, Actuator, type SensorMetadata } from "@/components";
 export class RoomAgent {
 	protected readonly logger: Logger;
 
-	private orchestratorCommand: Record<string, boolean> = { heater: false, dehumidifier: false };
 	private actuatorState: {
 		heater: { curr: boolean, next: boolean },
 		dehumidifier: { curr: boolean, next: boolean }
@@ -85,7 +84,7 @@ export class RoomAgent {
 			}
 
 			if (topic === `${roomTopic}/sensors/humidity`) {
-				const state = this.actuatorState.heater;
+				const state = this.actuatorState.dehumidifier;
 				sensors.forEach(async sensor => {
 					if (sensor.config.name !== "humidity") return;
 

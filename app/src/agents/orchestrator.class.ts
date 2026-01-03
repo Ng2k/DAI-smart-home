@@ -3,49 +3,92 @@
  * @author Nicola Guerra
  */
 import type { MqttClient } from "mqtt";
-
 import { logger, type Logger } from "@/libs/logger.ts";
 
-/**
- * @classdesc Rooms orchestrator, handles policies that rooms have to follow
- * @class Orchestrator
- */
+type EnergyMode = "eco" | "power";
+
+type RoomPolicy = {
+	energyMode: EnergyMode;
+	allowActuators: boolean;
+};
+
 export class Orchestrator {
 	private readonly logger: Logger;
-	private readonly maxDevices = 4;
-	private currentDevices = 0;
+	private readonly maxDevices = 2;
+	private currentPolicy: RoomPolicy = { energyMode: "power", allowActuators: true };
+	private activeDevices = new Set<string>(); // <roomId>/<actuator>
 
 	constructor(
 		public readonly id: string,
 		private readonly mqtt: MqttClient
 	) {
 		this.logger = logger.child({ name: this.constructor.name, id: this.id });
-		if (!id.trim()) this.logger.error({ id }, "Invalid room id");
 
-		const topics = ["room/+/sensors/+", "room/+/actuators/+/ack"];
-		this.mqtt.subscribe(topics, (error, granted) => {
-			if (error) {
-				this.logger.error({ error }, "Error during subscription to topics");
+		const topics = ["room/+/actuators/+/ack"];
+		this.mqtt.subscribe(topics, err => {
+			if (err) {
+				this.logger.error({ err }, "Failed to subscribe");
 				return;
 			}
-
-			this.logger.info({ granted }, "Successfully subscribed to topics");
+			this.logger.info("Subscribed to actuator ACK topics");
 		});
 
-		this.mqtt.on("message", (topic, payload) => {
-			const body = JSON.parse(payload.toString());
-			const topicSplit = topic.split("/");
-			if (topicSplit.find(value => value === "actuators")) {
-				this.logger.debug({ payload: body }, "Message received.");
-				if (body.value) this.currentDevices++;
-				else this.currentDevices--;
-			}
-		});
+		this.mqtt.on("message", (topic, payload) =>
+			this.handleActuatorAck(topic, payload)
+		);
 
-		const interval = setInterval(() => {
-			this.logger.debug(`Current actuators ON: ${this.currentDevices}`);
-		}, 5000);
-		//TODO: controllare i threshold
-		//TODO: forzare le policy
+		setInterval(() => this.publishPolicies(), 5_000);
+	}
+
+	// private methods -----------------------------------------------------------------------------
+
+	private handleActuatorAck(topic: string, payload: Buffer): void {
+		const { value } = JSON.parse(payload.toString());
+		const [, roomId, , actuator] = topic.split("/");
+
+		const key = `${roomId}/${actuator}`;
+
+		if (value) this.activeDevices.add(key);
+		else this.activeDevices.delete(key);
+
+		this.logger.debug(
+			{ roomId, actuator, value },
+			"Actuator state updated"
+		);
+	}
+
+	private publishPolicies(): void {
+		const activeCount = this.activeDevices.size;
+		const energyMode: EnergyMode = activeCount <= this.maxDevices ? "power" : "eco";
+
+		const policy: RoomPolicy = {
+			energyMode,
+			allowActuators: energyMode === "power"
+		};
+
+		if (
+			this.currentPolicy.energyMode === policy.energyMode &&
+			this.currentPolicy.allowActuators === policy.allowActuators
+		) return;
+
+		this.logger.info(
+			{ activeCount, policy },
+			"Publishing global room policy"
+		);
+
+		// broadcast to all rooms
+		this.mqtt.publish(
+			"room/all/policy",
+			JSON.stringify(policy),
+			err => err && this.logger.error({ err }, "Policy publish failed")
+		);
 	}
 }
+
+
+
+
+
+
+
+

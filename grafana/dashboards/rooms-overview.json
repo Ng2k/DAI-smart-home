@@ -1,0 +1,77 @@
+{
+  "uid": "rooms-overview",
+  "title": "Rooms Overview",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5s",
+  "tags": ["DAI", "overview"],
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Active Rooms",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "count(room_temperature)",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["last"] }
+      }
+    },
+    {
+      "id": 2,
+      "type": "piechart",
+      "title": "Energy Mode Distribution",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "sum by (room_id) (room_energy_mode)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Average Temperature",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 5 },
+      "targets": [
+        {
+          "expr": "avg(room_temperature)",
+          "legendFormat": "avg temp",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Average Humidity",
+      "gridPos": { "x": 0, "y": 9, "w": 12, "h": 5 },
+      "targets": [
+        {
+          "expr": "avg(room_humidity)",
+          "legendFormat": "avg humidity",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "barchart",
+      "title": "Active Actuators per Room",
+      "gridPos": { "x": 0, "y": 14, "w": 12, "h": 5 },
+      "targets": [
+        {
+          "expr": "sum by (room_id) (room_actuator_state)",
+          "legendFormat": "{{room_id}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

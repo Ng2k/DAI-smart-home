@@ -1,40 +1,53 @@
 /**
- * @brief Entrypoint
+ * @brief Application entrypoint
  * @file index.ts
  * @author Nicola Guerra
  */
-import { eq } from 'drizzle-orm';
-import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { eq } from "drizzle-orm";
+import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
 
-import { logger } from "@/libs/logger.ts";
-import { Mqtt } from "@/libs/mqtt.ts";
-import { components, users, rooms } from "@/db/schema.ts";
+import { logger } from "@/libs/logger";
+import { Mqtt } from "@/libs/mqtt";
+import { components, users, rooms } from "@/db/schema";
 import { RoomAgent, Orchestrator } from "@/agents";
 import { Sensor, Actuator } from "@/components";
 import type { ComponentConfig, SensorMetadata } from "@/components";
-import mqtt from 'mqtt';
 
-const getAllRooms = async (db: NodePgDatabase, userId: string): Promise<any> => {
-	try {
-		const results = await db.select().from(rooms).where(eq(rooms.user_id, userId));
-		return await Promise.all(
-			results.map(async (room) => {
-				const componentsInRoom = await db
-					.select()
-					.from(components)
-					.where(eq(components.room_id, room.id));
+import "@/metrics";
+import { startMetricsServer } from "@/metrics/server";
 
-				return {
-					...room,
-					sensors: componentsInRoom.filter(c => c.type === 'sensor'),
-					actuators: componentsInRoom.filter(c => c.type === 'actuator')
-				};
-			})
-		);
-	} catch (error) {
-		logger.error({ error }, "Database Error");
-	}
-}
+// ────────────────────────────────────────────────────────────────
+// DB helpers
+// ────────────────────────────────────────────────────────────────
+
+const getAllRooms = async (
+	db: NodePgDatabase,
+	userId: string
+): Promise<any[]> => {
+	const dbRooms = await db
+		.select()
+		.from(rooms)
+		.where(eq(rooms.user_id, userId));
+
+	return Promise.all(
+		dbRooms.map(async room => {
+			const comps = await db
+				.select()
+				.from(components)
+				.where(eq(components.room_id, room.id));
+
+			return {
+				...room,
+				sensors: comps.filter(c => c.type === "sensor"),
+				actuators: comps.filter(c => c.type === "actuator")
+			};
+		})
+	);
+};
+
+// ────────────────────────────────────────────────────────────────
+// Room bootstrap
+// ────────────────────────────────────────────────────────────────
 
 const instantiateRooms = async (
 	rooms: {
@@ -48,56 +61,81 @@ const instantiateRooms = async (
 
 	return Promise.all(
 		rooms.map(async room => {
-			const sensors: Sensor[] = await Promise.all(
+			const sensors = await Promise.all(
 				room.sensors.map(async sensor => {
-					const mqttClient = await mqtt.createClient(sensor.id);
+					const client = await mqtt.createClient(sensor.id);
 					const metadata = sensor.metadata as SensorMetadata;
-					return new Sensor(sensor, mqttClient, metadata.initial_value);
+					return new Sensor(sensor, client, metadata.initial_value);
 				})
 			);
 
-			const actuators: Actuator[] = await Promise.all(
+			const actuators = await Promise.all(
 				room.actuators.map(async actuator => {
-					const mqttClient = await mqtt.createClient(actuator.id);
-					return new Actuator(actuator, mqttClient);
+					const client = await mqtt.createClient(actuator.id);
+					return new Actuator(actuator, client);
 				})
 			);
 
-			const mqttClient = await mqtt.createClient(room.id);
+			const roomClient = await mqtt.createClient(room.id);
+
+			logger.info(
+				{ room: room.id, sensors: sensors.length, actuators: actuators.length },
+				"Room instantiated"
+			);
+
 			return new RoomAgent(
 				room.id,
 				room.name,
 				sensors,
-				actuators,
-				mqttClient
+				roomClient
 			);
 		})
 	);
 };
 
+// ────────────────────────────────────────────────────────────────
+// Main
+// ────────────────────────────────────────────────────────────────
+
 const main = async () => {
-	const dbUrl = Bun.env.DATABASE_URL || "";
-	const userId = Bun.env.USER_ID || "";
+	const dbUrl = Bun.env.DATABASE_URL;
+	const userId = Bun.env.USER_ID;
 
-	if (!userId.trim()) {
-		logger.error("User not setted in the env file");
-		return;
-	}
-	if (!dbUrl.trim()) {
-		logger.error("No database setted in the env file");
-		return;
+	if (!dbUrl || !userId) {
+		logger.error("DATABASE_URL or USER_ID missing");
+		process.exit(1);
 	}
 
-	const db = drizzle({ connection: dbUrl, casing: 'snake_case' });
-	const user = (await db.selectDistinct().from(users).where(eq(users.id, userId)))[0];
+	const db = drizzle({ connection: dbUrl, casing: "snake_case" });
+
+	const user = (
+		await db.select().from(users).where(eq(users.id, userId))
+	)[0];
 
 	if (!user) {
-		logger.error({ userId }, "No user with that id");
-		return;
+		logger.error({ userId }, "User not found");
+		process.exit(1);
 	}
 
-	const rooms = await instantiateRooms(await getAllRooms(db, user.id));
-	const orchestrator = new Orchestrator("", await Mqtt.getInstance().createClient(""));
+	const roomConfigs = await getAllRooms(db, user.id);
+	const roomAgents = await instantiateRooms(roomConfigs);
+
+	// Global orchestrator
+	const orchestratorClient = await Mqtt.getInstance().createClient("orchestrator");
+	const orchestrator = new Orchestrator(user.id, orchestratorClient);
+
+	// Metrics
+	startMetricsServer();
+
+	logger.info(
+		{
+			rooms: roomAgents.length
+		},
+		"System started successfully"
+	);
 };
 
-main();
+main().catch(err => {
+	logger.fatal({ err }, "Fatal startup error");
+	process.exit(1);
+});

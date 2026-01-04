@@ -4,14 +4,16 @@ services:
             context: ./app
             dockerfile: Dockerfile
         container_name: app
+        ports:
+            - "9464:9464"
         env_file:
             - ./app/envs/.development.env
         environment:
             - DOCKER_BUILDKIT=1
-            - NODE_ENV=development
         networks:
             - database_network
             - mqtt_network
+            - metrics_network
 
     mqtt:
         build:
@@ -49,12 +51,40 @@ services:
             retries: 5
             start_period: 30s
 
+    prometheus:
+        image: prom/prometheus:v3.8.1
+        container_name: prometheus
+        volumes:
+            - ./prometheus:/etc/prometheus
+        ports:
+            - "9090:9090"
+        networks:
+            - metrics_network
+        restart: unless-stopped
+
+    grafana:
+        image: grafana/grafana:main-ubuntu
+        container_name: grafana
+        ports:
+            - "3000:3000"
+        volumes:
+            - grafana_data:/var/lib/grafana
+            - ./grafana/provisioning:/etc/grafana/provisioning
+            - ./grafana/dashboards:/var/lib/grafana/dashboards
+        depends_on:
+            - prometheus
+        networks:
+            - metrics_network
+        restart: unless-stopped
+
 networks:
     mqtt_network:
     database_network:
+    metrics_network:
 
 volumes:
     mqtt_data:
     mqtt_log:
     pgdata:
+    grafana_data:
 

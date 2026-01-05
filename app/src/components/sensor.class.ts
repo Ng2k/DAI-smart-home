@@ -1,132 +1,109 @@
-
 /**
  * @file sensor.class.ts
  * @author Nicola Guerra
  */
-
 import path from "path";
 import type { MqttClient } from "mqtt";
 import { Component, type ComponentConfig } from "@/components";
 
 export type SensorMetadata = {
+	uom: string;
+	freq: number;        // update frequency in seconds
+	freq_uom: string;    // e.g., "s"
+	actuator: string;    // associated actuator
 	initial_value: number;
 	max_value: number;
 };
 
 export class Sensor extends Component {
 	public override readonly pubTopic: string;
+	public override readonly subTopic: string;
 
-	private current: number;
-	private actuatorState = false;
-	private interval?: NodeJS.Timeout;
+	private value: number;
+	private target: number; // target value for smooth convergence
+	private actuatorState: boolean = false;
 
-	constructor(config: ComponentConfig, mqtt: MqttClient) {
+	constructor(config: ComponentConfig, mqtt: MqttClient, initialValue: number) {
 		super(config, mqtt);
 
 		this.logger = this.logger.child({ name: path.basename(__filename) });
+		const roomTopic = `room/${config.room_id}`;
+		this.pubTopic = `${roomTopic}/sensors/${config.name}`;
+		const { actuator } = this.config.metadata as SensorMetadata;
+		this.subTopic = `${roomTopic}/actuators/${actuator}/ack`;
 
-		const meta = config.metadata as SensorMetadata;
-		this.current = meta.initial_value;
+		this.value = initialValue;
+		this.target = initialValue;
 
-		this.pubTopic = `room/${config.room_id}/sensors/${config.name}`;
+		// Subscribe to actuator ack messages
+		mqtt.subscribe(this.subTopic, (error, granted) => {
+			if (error) {
+				this.logger.error({ error }, "Error during subscription");
+				return;
+			}
+			this.logger.debug({ granted }, "Sensor subscribed to actuator ack");
+		});
 
-		/* ---------------- ACTUATOR COUPLING ---------------- */
-
-		const actuator =
-			config.name === "temperature"
-				? "heater"
-				: config.name === "humidity"
-					? "dehumidifier"
-					: undefined;
-
-		if (actuator) {
-			this.mqtt.subscribe(
-				`room/${config.room_id}/actuators/${actuator}/ack`,
-				err => {
-					if (err) {
-						this.logger.error(
-							{ err },
-							"Failed to subscribe to actuator ACK"
-						);
-					}
-				}
-			);
-		}
-
-		this.mqtt.on("message", (topic, payload) => {
-			if (!topic.endsWith("/ack")) return;
-
+		// Update actuator state from MQTT
+		mqtt.on("message", (_, payload) => {
 			try {
-				const { value } = JSON.parse(payload.toString());
-				this.actuatorState = Boolean(value);
-
-				this.logger.debug(
-					{ actuatorState: this.actuatorState },
-					"Actuator state updated"
-				);
+				const msg = JSON.parse(payload.toString());
+				this.actuatorState = Boolean(msg.value);
 			} catch {
-				this.logger.warn("Invalid actuator ACK payload");
+				// ignore non-JSON messages
 			}
 		});
 
 		this.logger.info("Sensor initialized");
 	}
 
-	/* ---------------- LIFECYCLE ---------------- */
-
+	/**
+	 * Start sensor simulation
+	 */
 	public start(): void {
-		// Publish immediately
-		this.publish();
-
-		// Update every second
-		this.interval = setInterval(() => this.tick(), 1000);
-	}
-
-	public stop(): void {
-		if (this.interval) clearInterval(this.interval);
-	}
-
-	/* ---------------- PHYSICS SIMULATION ---------------- */
-
-	private tick(): void {
 		const meta = this.config.metadata as SensorMetadata;
 
-		switch (this.config.name) {
-			case "temperature":
-				// Heater ON -> temperature rises
-				// Heater OFF -> temperature slowly drops
-				this.current += this.actuatorState ? +0.4 : -0.15;
-				break;
+		setInterval(async () => {
+			try {
+				const alpha = 0.05; // how fast it converges (smaller = slower)
+				let delta = 0;
 
-			case "humidity":
-				// Dehumidifier ON -> humidity decreases
-				// Dehumidifier OFF -> humidity increases
-				this.current += this.actuatorState ? -0.6 : +0.25;
-				break;
-		}
+				if (this.config.name === "temperature") {
+					this.target = this.actuatorState ? meta.max_value : meta.initial_value;
+					delta = (this.target - this.value) * alpha;
 
-		/* ---------- Extreme-safe clamping ---------- */
+				} else if (this.config.name === "humidity") {
+					this.target = this.actuatorState ? meta.initial_value : meta.max_value;
+					delta = (this.target - this.value) * alpha;
+				}
 
-		// Simulation allows unrealistic values but not infinity
-		this.current = Math.max(-20, Math.min(200, this.current));
+				this.value += delta;
 
-		this.publish();
-	}
+				// Optional: clamp values to reasonable range
+				if (this.config.name === "temperature") {
+					this.value = Math.max(-20, Math.min(200, this.value));
+				}
+				if (this.config.name === "humidity") {
+					this.value = Math.max(0, Math.min(100, this.value));
+				}
 
-	/* ---------------- MQTT ---------------- */
+				await this.mqtt.publishAsync(this.pubTopic, JSON.stringify({ value: this.value }));
 
-	private publish(): void {
-		this.mqtt.publish(
-			this.pubTopic,
-			JSON.stringify({
-				value: Number(this.current.toFixed(2))
-			})
-		);
+				this.logger.debug(
+					{
+						sensor: this.config.name,
+						value: this.value.toFixed(2),
+						target: this.target,
+						actuatorState: this.actuatorState
+					},
+					"Sensor value published"
+				);
 
-		this.logger.debug(
-			{ value: this.current },
-			"Sensor value published"
-		);
+			} catch (error) {
+				this.logger.error({ error }, "Error publishing sensor value");
+			}
+		}, meta.freq * 1000);
 	}
 }
+
 

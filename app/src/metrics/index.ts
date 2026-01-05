@@ -9,6 +9,20 @@ register.setDefaultLabels({
 client.collectDefaultMetrics({ register });
 
 //   METRICS DEFINITIONS
+export const roomComfortViolation = new client.Gauge({
+	name: "room_comfort_violation",
+	help: "1 if room is outside comfort bounds, 0 otherwise",
+	labelNames: ["room_id"],
+	registers: [register]
+});
+
+export const roomTemperatureError = new client.Gauge({
+	name: "room_temperature_error_celsius",
+	help: "Difference between measured temperature and target",
+	labelNames: ["room_id"],
+	registers: [register]
+});
+
 export const roomTemperature = new client.Gauge({
 	name: "room_temperature_celsius",
 	help: "Room temperature",
@@ -66,4 +80,3 @@ export const roomEnergyWhTotal = new client.Counter({
 });
 
 export { register };
-

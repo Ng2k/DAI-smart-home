@@ -1,32 +1,48 @@
 {
   "uid": "rooms-overview",
   "title": "Rooms Overview",
-  "timezone": "browser",
-  "schemaVersion": 38,
-  "version": 1,
-  "refresh": "5s",
   "tags": ["DAI", "overview"],
+  "timezone": "browser",
+  "schemaVersion": 42,
+  "version": 2,
+  "refresh": "5s",
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "room",
+        "label": "Room",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(room_temperature_celsius, room_id)",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "sort": 1
+      }
+    ]
+  },
   "panels": [
     {
       "id": 1,
       "type": "stat",
-      "title": "Active Rooms",
-      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "title": "🏠 Active Rooms",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 4 },
       "targets": [
         {
-          "expr": "count(room_temperature)",
+          "expr": "count(count by (room_id) (room_temperature_celsius))",
           "refId": "A"
         }
-      ],
-      "options": {
-        "reduceOptions": { "calcs": ["last"] }
-      }
+      ]
     },
     {
       "id": 2,
       "type": "piechart",
-      "title": "Energy Mode Distribution",
-      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "title": "⚡ Energy Mode Distribution",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 4 },
       "targets": [
         {
           "expr": "sum by (room_id) (room_energy_mode)",
@@ -37,41 +53,76 @@
     {
       "id": 3,
       "type": "timeseries",
-      "title": "Average Temperature",
+      "title": "🌡 Average Temperature",
       "gridPos": { "x": 0, "y": 4, "w": 12, "h": 5 },
       "targets": [
         {
-          "expr": "avg(room_temperature)",
-          "legendFormat": "avg temp",
-          "refId": "A"
+          "expr": "avg(room_temperature_celsius{room_id=\"$room\"})",
+          "legendFormat": "Temperature"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": 18 },
+              { "color": "green", "value": 21 },
+              { "color": "red", "value": 26 }
+            ]
+          }
+        }
+      }
     },
     {
       "id": 4,
       "type": "timeseries",
-      "title": "Average Humidity",
-      "gridPos": { "x": 0, "y": 9, "w": 12, "h": 5 },
+      "title": "💧 Average Humidity",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 5 },
       "targets": [
         {
-          "expr": "avg(room_humidity)",
-          "legendFormat": "avg humidity",
-          "refId": "A"
+          "expr": "avg(room_humidity_percent{room_id=\"$room\"})",
+          "legendFormat": "Humidity"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 30 },
+              { "color": "yellow", "value": 60 },
+              { "color": "red", "value": 75 }
+            ]
+          }
+        }
+      }
     },
     {
       "id": 5,
       "type": "barchart",
-      "title": "Active Actuators per Room",
-      "gridPos": { "x": 0, "y": 14, "w": 12, "h": 5 },
+      "title": "⚙️ Active Actuators (Selected Room)",
+      "gridPos": { "x": 0, "y": 9, "w": 24, "h": 4 },
       "targets": [
         {
-          "expr": "sum by (room_id) (room_actuator_state)",
-          "legendFormat": "{{room_id}}",
+          "expr": "sum by (actuator) (room_actuator_state{room_id=\"$room\"})",
+          "legendFormat": "{{actuator}}",
           "refId": "A"
         }
       ]
     }
-  ]
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "type": "dashboard",
+        "name": "Annotations",
+        "enable": true,
+        "hide": true
+      }
+    ]
+  }
 }

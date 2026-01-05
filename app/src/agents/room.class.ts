@@ -1,9 +1,12 @@
 import type { MqttClient } from "mqtt";
 import { logger, type Logger } from "@/libs/logger.ts";
 import { Sensor, type SensorMetadata } from "@/components";
+
 import {
 	roomTemperature,
 	roomHumidity,
+	roomComfortViolation,
+	roomTemperatureError,
 	actuatorState,
 	roomCommandsTotal,
 	policyBlocksTotal,
@@ -12,6 +15,8 @@ import {
 	roomEnergyWhTotal
 } from "@/metrics/index.ts";
 
+/* ---------------- TYPES ---------------- */
+
 type EnergyMode = "eco" | "power";
 
 type RoomPolicy = {
@@ -19,15 +24,19 @@ type RoomPolicy = {
 	allowActuators: boolean;
 };
 
-type ActuatorState = {
+type ActuatorInternalState = {
 	curr: boolean;
 	next: boolean;
 };
+
+/* ---------------- CONSTANTS ---------------- */
 
 const ACTUATOR_POWER_WATTS: Record<string, number> = {
 	heater: 1500,
 	dehumidifier: 300
 };
+
+/* ---------------- ROOM AGENT ---------------- */
 
 export class RoomAgent {
 	protected readonly logger: Logger;
@@ -37,7 +46,7 @@ export class RoomAgent {
 		allowActuators: true
 	};
 
-	private actuatorsState: Record<string, ActuatorState> = {
+	private actuatorsState: Record<string, ActuatorInternalState> = {
 		heater: { curr: false, next: false },
 		dehumidifier: { curr: false, next: false }
 	};
@@ -50,86 +59,179 @@ export class RoomAgent {
 		private readonly sensors: Sensor[],
 		private readonly mqtt: MqttClient
 	) {
-		this.logger = logger.child({ room: id });
+		this.logger = logger.child({
+			component: "RoomAgent",
+			room_id: id,
+			room_name: name
+		});
 
-		sensors.forEach(s => s.start());
+		// Start sensors
+		sensors.forEach(sensor => sensor.start());
 
-		const base = `room/${id}`;
+		const baseTopic = `room/${id}`;
+
 		this.mqtt.subscribe(
-			[`${base}/sensors/+`, `${base}/actuators/+/ack`, `${base}/policy`, `room/all/policy`],
-			err => err && this.logger.error(err)
+			[
+				`${baseTopic}/sensors/+`,
+				`${baseTopic}/actuators/+/ack`,
+				`${baseTopic}/policy`,
+				`room/all/policy`
+			],
+			err => {
+				if (err) {
+					this.logger.error({ err }, "MQTT subscription failed");
+				}
+			}
 		);
 
-		this.mqtt.on(
-			"message",
-			(t, p) => this.handleMessage(t, p)
+		this.mqtt.on("message", (topic, payload) =>
+			this.handleMessage(topic, payload)
 		);
+
+		this.logger.info("RoomAgent initialized");
 	}
 
-	/* ---------------- MESSAGE HANDLING ---------------- */
+	/* ---------------- MESSAGE DISPATCH ---------------- */
 
 	private handleMessage(topic: string, payload: Buffer): void {
-		const { value } = JSON.parse(payload.toString());
+		let parsed;
+		try {
+			parsed = JSON.parse(payload.toString());
+		} catch (err) {
+			this.logger.warn({ topic, payload: payload.toString() }, "Invalid JSON payload");
+			return;
+		}
+
+		const { value } = parsed;
 
 		if (topic.endsWith("/policy")) {
-			this.policy = value;
+			this.policy = value as RoomPolicy;
+			this.logger.info({ policy: value }, "Policy updated");
 			return;
 		}
 
 		if (topic.includes("/actuators/")) {
-			this.updateActuatorState(topic, value);
+			this.updateActuatorState(topic, Boolean(value));
 			return;
 		}
 
 		if (topic.includes("/sensors/")) {
-			this.handleSensorData(topic, value);
+			this.handleSensorData(topic, Number(value));
 		}
 	}
 
-	/* ---------------- SENSOR ---------------- */
+	/* ---------------- SENSOR HANDLING ---------------- */
 
 	private handleSensorData(topic: string, value: number): void {
-		const sensorName = topic.split("/").at(-1)!;
+		const sensorName = topic.split("/").at(-1);
+		if (!sensorName) return;
+
 		const sensor = this.sensors.find(s => s.config.name === sensorName);
 		if (!sensor) return;
 
 		const meta = sensor.config.metadata as SensorMetadata;
 
-		if (sensorName === "temperature") {
-			roomTemperature.set({ room_id: this.id }, value);
-			this.evaluateActuator("heater", value < meta.initial_value, value > meta.max_value);
-		}
+		switch (sensorName) {
+			case "temperature": {
+				roomTemperature.set({ room_id: this.id }, value);
 
-		if (sensorName === "humidity") {
-			roomHumidity.set({ room_id: this.id }, value);
-			this.evaluateActuator("dehumidifier", value > meta.max_value, value < meta.initial_value);
+				this.updateTemperatureComfortMetrics(value, meta);
+
+				this.evaluateActuator(
+					"heater",
+					value < meta.initial_value,
+					value > meta.max_value
+				);
+
+				break;
+			}
+
+			case "humidity": {
+				roomHumidity.set({ room_id: this.id }, value);
+
+				this.evaluateActuator(
+					"dehumidifier",
+					value > meta.max_value,
+					value < meta.initial_value
+				);
+
+				break;
+			}
 		}
 	}
 
-	/* ---------------- ACTUATORS ---------------- */
+	/* ---------------- COMFORT METRICS ---------------- */
+
+	private updateTemperatureComfortMetrics(
+		current: number,
+		meta: SensorMetadata
+	): void {
+		const target = meta.initial_value;
+		const min = meta.initial_value;
+		const max = meta.max_value;
+
+		const error = current - target;
+		const violated = current < min || current > max;
+
+		roomTemperatureError.set({ room_id: this.id }, error);
+		roomComfortViolation.set({ room_id: this.id }, violated ? 1 : 0);
+
+		this.logger.debug(
+			{
+				current,
+				target,
+				error,
+				violated
+			},
+			"Temperature comfort evaluated"
+		);
+	}
+
+	/* ---------------- ACTUATOR CONTROL ---------------- */
 
 	private updateActuatorState(topic: string, value: boolean): void {
-		const actuator = topic.split("/").at(-2)!;
+		const actuator = topic.split("/").at(-2);
+		if (!actuator) return;
+
 		const state = this.actuatorsState[actuator];
 		if (!state) return;
 
 		state.curr = value;
-		actuatorState.set({ room_id: this.id, actuator }, value ? 1 : 0);
-		this.updateEnergy();
+
+		actuatorState.set(
+			{ room_id: this.id, actuator },
+			value ? 1 : 0
+		);
+
+		this.updateEnergyMetrics();
+
+		this.logger.info(
+			{ actuator, state: value },
+			"Actuator state acknowledged"
+		);
 	}
 
-	private evaluateActuator(actuator: string, on: boolean, off: boolean): void {
+	private evaluateActuator(
+		actuator: string,
+		shouldTurnOn: boolean,
+		shouldTurnOff: boolean
+	): void {
 		const state = this.actuatorsState[actuator];
 		if (!state) return;
 
-		if (on) state.next = true;
-		if (off) state.next = false;
+		if (shouldTurnOn) state.next = true;
+		if (shouldTurnOff) state.next = false;
 
 		if (state.curr === state.next) return;
 
 		if (!this.policy.allowActuators && state.next) {
 			policyBlocksTotal.inc({ room_id: this.id });
 			policyViolationsTotal.inc({ room_id: this.id });
+
+			this.logger.warn(
+				{ actuator },
+				"Actuator command blocked by policy"
+			);
 			return;
 		}
 
@@ -141,27 +243,32 @@ export class RoomAgent {
 			`room/${this.id}/actuators/${actuator}`,
 			JSON.stringify({ value })
 		);
+
 		roomCommandsTotal.inc({ room_id: this.id });
+
+		this.logger.info(
+			{ actuator, value },
+			"Actuator command published"
+		);
 	}
 
-	/* ---------------- ENERGY ---------------- */
+	/* ---------------- ENERGY ACCOUNTING ---------------- */
 
-	private updateEnergy(): void {
+	private updateEnergyMetrics(): void {
 		const now = Date.now();
-		const deltaH = (now - this.lastEnergyTs) / 3600000;
+		const deltaHours = (now - this.lastEnergyTs) / 3_600_000;
 		this.lastEnergyTs = now;
 
-		const power = Object.entries(this.actuatorsState)
+		const powerWatts = Object.entries(this.actuatorsState)
 			.filter(([_, s]) => s.curr)
-			.reduce((sum, [a]) => sum + (ACTUATOR_POWER_WATTS[a] ?? 0), 0);
+			.reduce(
+				(sum, [actuator]) =>
+					sum + (ACTUATOR_POWER_WATTS[actuator] ?? 0),
+				0
+			);
 
-		roomEnergyWatts.set({ room_id: this.id }, power);
-		roomEnergyWhTotal.inc({ room_id: this.id }, power * deltaH);
+		roomEnergyWatts.set({ room_id: this.id }, powerWatts);
+		roomEnergyWhTotal.inc({ room_id: this.id }, powerWatts * deltaHours);
 	}
 }
-
-
-
-
-
 

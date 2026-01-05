@@ -1,79 +1,132 @@
+
 /**
  * @file sensor.class.ts
  * @author Nicola Guerra
  */
+
 import path from "path";
 import type { MqttClient } from "mqtt";
-
 import { Component, type ComponentConfig } from "@/components";
 
 export type SensorMetadata = {
-	uom: string;
-	freq: number;
-	freq_uom: string;
-	actuator: string;
 	initial_value: number;
-	max_value: number
-}
+	max_value: number;
+};
 
 export class Sensor extends Component {
 	public override readonly pubTopic: string;
-	public override readonly subTopic: string;
 
-	private env: boolean = false;
-	private value: number;
+	private current: number;
+	private actuatorState = false;
+	private interval?: NodeJS.Timeout;
 
-	constructor(config: ComponentConfig, mqtt: MqttClient, value: number) {
+	constructor(config: ComponentConfig, mqtt: MqttClient) {
 		super(config, mqtt);
+
 		this.logger = this.logger.child({ name: path.basename(__filename) });
 
-		const roomTopic = `room/${config.room_id}`;
-		this.pubTopic = `${roomTopic}/sensors/${config.name}`;
-		const { actuator } = this.config.metadata as SensorMetadata;
-		this.subTopic = `${roomTopic}/actuators/${actuator}/ack`;
+		const meta = config.metadata as SensorMetadata;
+		this.current = meta.initial_value;
 
-		this.value = value;
+		this.pubTopic = `room/${config.room_id}/sensors/${config.name}`;
 
-		mqtt.subscribe(this.subTopic, (error, granted) => {
-			if (error) {
-				this.logger.error({ error }, "Error during subscription to topic");
-				return;
+		/* ---------------- ACTUATOR COUPLING ---------------- */
+
+		const actuator =
+			config.name === "temperature"
+				? "heater"
+				: config.name === "humidity"
+					? "dehumidifier"
+					: undefined;
+
+		if (actuator) {
+			this.mqtt.subscribe(
+				`room/${config.room_id}/actuators/${actuator}/ack`,
+				err => {
+					if (err) {
+						this.logger.error(
+							{ err },
+							"Failed to subscribe to actuator ACK"
+						);
+					}
+				}
+			);
+		}
+
+		this.mqtt.on("message", (topic, payload) => {
+			if (!topic.endsWith("/ack")) return;
+
+			try {
+				const { value } = JSON.parse(payload.toString());
+				this.actuatorState = Boolean(value);
+
+				this.logger.debug(
+					{ actuatorState: this.actuatorState },
+					"Actuator state updated"
+				);
+			} catch {
+				this.logger.warn("Invalid actuator ACK payload");
 			}
-
-			this.logger.debug({ granted }, "Sensor subscribed to topic");
-		});
-
-		mqtt.on("message", (_, payload) => {
-			this.env = JSON.parse(payload.toString()).value;
 		});
 
 		this.logger.info("Sensor initialized");
 	}
 
-	// public methods ------------------------------------------------------------------------------
-	/**
-	 * @description Start the sensor reading
-	 * @returns {void}
-	 */
+	/* ---------------- LIFECYCLE ---------------- */
+
 	public start(): void {
-		setInterval(async () => {
-			try {
-				let dt = 0;
-				if (this.config.name === "temperature") dt = this.env ? 0.5 : -0.25;
-				if (this.config.name === "humidity") dt = this.env ? -0.25 : 0.5;
-				this.value += dt;
-				await this.mqtt.publishAsync(this.pubTopic, JSON.stringify({ value: this.value }));
-				this.logger.info(
-					{
-						sensor: this.config.name,
-						value: this.value,
-						uom: (this.config.metadata as SensorMetadata).uom
-					},
-					"Sensor value published"
-				);
-			} catch (error) {
-				this.logger.error({ error }, "Error during message publishing");
-			}
-		}, (this.config.metadata as SensorMetadata).freq * 1000);
+		// Publish immediately
+		this.publish();
+
+		// Update every second
+		this.interval = setInterval(() => this.tick(), 1000);
+	}
+
+	public stop(): void {
+		if (this.interval) clearInterval(this.interval);
+	}
+
+	/* ---------------- PHYSICS SIMULATION ---------------- */
+
+	private tick(): void {
+		const meta = this.config.metadata as SensorMetadata;
+
+		switch (this.config.name) {
+			case "temperature":
+				// Heater ON -> temperature rises
+				// Heater OFF -> temperature slowly drops
+				this.current += this.actuatorState ? +0.4 : -0.15;
+				break;
+
+			case "humidity":
+				// Dehumidifier ON -> humidity decreases
+				// Dehumidifier OFF -> humidity increases
+				this.current += this.actuatorState ? -0.6 : +0.25;
+				break;
+		}
+
+		/* ---------- Extreme-safe clamping ---------- */
+
+		// Simulation allows unrealistic values but not infinity
+		this.current = Math.max(-20, Math.min(200, this.current));
+
+		this.publish();
+	}
+
+	/* ---------------- MQTT ---------------- */
+
+	private publish(): void {
+		this.mqtt.publish(
+			this.pubTopic,
+			JSON.stringify({
+				value: Number(this.current.toFixed(2))
+			})
+		);
+
+		this.logger.debug(
+			{ value: this.current },
+			"Sensor value published"
+		);
 	}
 }
+

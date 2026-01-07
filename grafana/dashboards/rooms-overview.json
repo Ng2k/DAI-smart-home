@@ -1,128 +1,245 @@
 {
-  "uid": "rooms-overview",
-  "title": "Rooms Overview",
-  "tags": ["DAI", "overview"],
-  "timezone": "browser",
-  "schemaVersion": 42,
-  "version": 2,
-  "refresh": "5s",
-  "time": {
-    "from": "now-5m",
-    "to": "now"
-  },
-  "templating": {
+  "annotations": {
     "list": [
       {
-        "name": "room",
-        "label": "Room",
-        "type": "query",
-        "datasource": "Prometheus",
-        "query": "label_values(room_temperature_celsius, room_id)",
-        "refresh": 1,
-        "multi": false,
-        "includeAll": false,
-        "sort": 1
+        "builtIn": 1,
+        "enable": true,
+        "hide": true,
+        "name": "Annotations",
+        "type": "dashboard"
       }
     ]
   },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 4,
+  "links": [],
   "panels": [
     {
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
       "id": 1,
-      "type": "stat",
-      "title": "🏠 Active Rooms",
-      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 4 },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.0-20663813654",
       "targets": [
         {
           "expr": "count(count by (room_id) (room_temperature_celsius))",
           "refId": "A"
         }
-      ]
+      ],
+      "title": "🏠 Active Rooms",
+      "type": "stat"
     },
     {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
       "id": 2,
-      "type": "piechart",
-      "title": "⚡ Energy Mode Distribution",
-      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 4 },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.4.0-20663813654",
       "targets": [
         {
           "expr": "sum by (room_id) (room_energy_mode)",
           "refId": "A"
         }
-      ]
+      ],
+      "title": "⚡ Energy Mode Distribution",
+      "type": "piechart"
     },
     {
-      "id": 3,
-      "type": "timeseries",
-      "title": "🌡 Average Temperature",
-      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 5 },
-      "targets": [
-        {
-          "expr": "avg(room_temperature_celsius{room_id=\"$room\"})",
-          "legendFormat": "Temperature"
-        }
-      ],
       "fieldConfig": {
         "defaults": {
-          "unit": "celsius",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "blue", "value": 18 },
-              { "color": "green", "value": 21 },
-              { "color": "red", "value": 26 }
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
             ]
           }
-        }
-      }
-    },
-    {
-      "id": 4,
-      "type": "timeseries",
-      "title": "💧 Average Humidity",
-      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 5 },
-      "targets": [
-        {
-          "expr": "avg(room_humidity_percent{room_id=\"$room\"})",
-          "legendFormat": "Humidity"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": 30 },
-              { "color": "yellow", "value": 60 },
-              { "color": "red", "value": 75 }
-            ]
-          }
-        }
-      }
-    },
-    {
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
       "id": 5,
-      "type": "barchart",
-      "title": "⚙️ Active Actuators (Selected Room)",
-      "gridPos": { "x": 0, "y": 9, "w": 24, "h": 4 },
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "12.4.0-20663813654",
       "targets": [
         {
           "expr": "sum by (actuator) (room_actuator_state{room_id=\"$room\"})",
           "legendFormat": "{{actuator}}",
           "refId": "A"
         }
-      ]
+      ],
+      "title": "⚙️ Active Actuators (Selected Room)",
+      "type": "barchart"
     }
   ],
-  "annotations": {
+  "preload": false,
+  "refresh": "5s",
+  "schemaVersion": 42,
+  "tags": [
+    "DAI",
+    "overview"
+  ],
+  "templating": {
     "list": [
       {
-        "builtIn": 1,
-        "type": "dashboard",
-        "name": "Annotations",
-        "enable": true,
-        "hide": true
+        "includeAll": false,
+        "label": "Room",
+        "name": "room",
+        "options": [],
+        "query": "label_values(room_temperature_celsius, room_id)",
+        "refresh": 1,
+        "regexApplyTo": "value",
+        "sort": 1,
+        "type": "query"
       }
     ]
-  }
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Rooms Overview",
+  "uid": "rooms-overview",
+  "version": 1,
+  "weekStart": ""
 }

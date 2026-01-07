@@ -11,14 +11,9 @@ import { Mqtt } from "@/libs/mqtt";
 import { components, users, rooms } from "@/db/schema";
 import { RoomAgent, Orchestrator } from "@/agents";
 import { Sensor, Actuator } from "@/components";
-import type { ComponentConfig, SensorMetadata } from "@/components";
-
+import type { ComponentConfig } from "@/components";
 import "@/metrics";
 import { startMetricsServer } from "@/metrics/server";
-
-// ────────────────────────────────────────────────────────────────
-// DB helpers
-// ────────────────────────────────────────────────────────────────
 
 const getAllRooms = async (
 	db: NodePgDatabase,
@@ -45,10 +40,6 @@ const getAllRooms = async (
 	);
 };
 
-// ────────────────────────────────────────────────────────────────
-// Room bootstrap
-// ────────────────────────────────────────────────────────────────
-
 const instantiateRooms = async (
 	rooms: {
 		id: string;
@@ -64,8 +55,7 @@ const instantiateRooms = async (
 			const sensors = await Promise.all(
 				room.sensors.map(async sensor => {
 					const client = await mqtt.createClient(sensor.id);
-					const metadata = sensor.metadata as SensorMetadata;
-					return new Sensor(sensor, client, metadata.initial_value);
+					return new Sensor(sensor, client);
 				})
 			);
 
@@ -85,17 +75,13 @@ const instantiateRooms = async (
 
 			return new RoomAgent(
 				room.id,
-				room.name,
 				sensors,
+				actuators,
 				roomClient
 			);
 		})
 	);
 };
-
-// ────────────────────────────────────────────────────────────────
-// Main
-// ────────────────────────────────────────────────────────────────
 
 const main = async () => {
 	const dbUrl = Bun.env.DATABASE_URL;
@@ -120,19 +106,12 @@ const main = async () => {
 	const roomConfigs = await getAllRooms(db, user.id);
 	const roomAgents = await instantiateRooms(roomConfigs);
 
-	// Global orchestrator
 	const orchestratorClient = await Mqtt.getInstance().createClient("orchestrator");
 	const orchestrator = new Orchestrator(user.id, orchestratorClient);
 
-	// Metrics
 	startMetricsServer();
 
-	logger.info(
-		{
-			rooms: roomAgents.length
-		},
-		"System started successfully"
-	);
+	logger.info({ rooms: roomAgents.length }, "System started successfully");
 };
 
 main().catch(err => {

@@ -134,16 +134,15 @@ export class RoomAgent {
 
 		this.sendActuatorCommand(meta.actuator, desiredState);
 
-		const violation =
-			(sensorName === "temperature" &&
-				(value < meta.initial_value || value > meta.max_value)) ||
-			(sensorName === "co2" && value > meta.max_value) ||
-			(sensorName === "luminosity" && value < meta.initial_value);
-
-		roomComfortViolation.set(
-			{ room_id: this.roomId },
-			violation ? 1 : 0
+		const temperatureViolation = (
+			sensorName === "temperature" &&
+			(value < initial_value || value > max_value)
 		);
+		const co2Violation = sensorName === "co2" && value > max_value;
+		const luminosityViolation = sensorName === "luminosity" && value < initial_value;
+		const violation = temperatureViolation || co2Violation || luminosityViolation;
+
+		roomComfortViolation.set({ room_id: this.roomId }, violation ? 1 : 0);
 	}
 
 	private sendActuatorCommand(actuator: string, state: boolean) {
@@ -192,10 +191,7 @@ export class RoomAgent {
 
 			case "luminosity":
 				roomLuminosity.set({ room_id: this.roomId }, value);
-				roomLuminosityError.set(
-					{ room_id: this.roomId },
-					value - meta.initial_value
-				);
+				roomLuminosityError.set({ room_id: this.roomId }, value - meta.initial_value);
 				break;
 		}
 	}

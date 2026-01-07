@@ -100,7 +100,7 @@ export class RoomAgent {
 		meta: SensorMetadata
 	) {
 		let desiredState: boolean | undefined;
-		const { initial_value, max_value } = meta;
+		const { initial_value, max_value, actuator } = meta;
 		switch (sensorName) {
 			case "temperature": {
 				if (value <= initial_value) desiredState = true;
@@ -127,12 +127,12 @@ export class RoomAgent {
 
 		if (
 			desiredState === undefined ||
-			this.actuatorsList[meta.actuator] === desiredState
+			this.actuatorsList[actuator] === desiredState
 		) {
 			return;
 		}
 
-		this.sendActuatorCommand(meta.actuator, desiredState);
+		this.sendActuatorCommand(actuator, desiredState);
 
 		const temperatureViolation = (
 			sensorName === "temperature" &&

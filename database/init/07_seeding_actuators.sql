@@ -6,6 +6,7 @@ values (
 	'actuator',
 	'heater',
 	0.05,
+	'kW/s',
 	'{}'::jsonb
 );
 insert into components (user_id, room_id, type, name, power, power_uom, metadata)
@@ -35,6 +36,7 @@ values (
 	'actuator',
 	'dehumidifier',
 	0.20,
+	'kW/s',
 	'{}'::jsonb
 );
 insert into components (user_id, room_id, type, name, power, power_uom, metadata)
@@ -44,6 +46,67 @@ values (
 	'actuator',
 	'heater',
 	0.05,
+	'kW/s',
+	'{}'::jsonb
+);
+insert into components (user_id, room_id, type, name, power, power_uom, metadata)
+values (
+	(select id from users where email='test@test.com'),
+	(select id from rooms where name='kitchen' and user_id = (select id from users where email='test@test.com')),
+	'actuator',
+	'dehumidifier',
+	0.20,
+	'kW/s',
+	'{}'::jsonb
+);
+insert into components (user_id, room_id, type, name, power, power_uom, metadata)
+values (
+	(select id from users where email='test@test.com'),
+	(select id from rooms where name='kitchen' and user_id = (select id from users where email='test@test.com')),
+	'actuator',
+	'ventilation',
+	0.12,
+	'kW/s',
+	'{}'::jsonb
+);
+insert into components (user_id, room_id, type, name, power, power_uom, metadata)
+values (
+	(select id from users where email='test@test.com'),
+	(select id from rooms where name='kitchen' and user_id = (select id from users where email='test@test.com')),
+	'actuator',
+	'light',
+	0.015,
+	'kW/s',
+	'{}'::jsonb
+);
+insert into components (user_id, room_id, type, name, power, power_uom, metadata)
+values (
+	(select id from users where email='test@test.com'),
+	(select id from rooms where name='bathroom' and user_id = (select id from users where email='test@test.com')),
+	'actuator',
+	'heater',
+	0.05,
+	'kW/s',
+	'{}'::jsonb
+);
+insert into components (user_id, room_id, type, name, power, power_uom, metadata)
+values (
+	(select id from users where email='test@test.com'),
+	(select id from rooms where name='bathroom' and user_id = (select id from users where email='test@test.com')),
+	'actuator',
+	'ventilation',
+	0.12,
+	'kW/s',
+	'{}'::jsonb
+);
+insert into components (user_id, room_id, type, name, power, power_uom, metadata)
+values (
+	(select id from users where email='test@test.com'),
+	(select id from rooms where name='bathroom' and user_id = (select id from users where email='test@test.com')),
+	'actuator',
+	'light',
+	0.015,
+	'kW/s',
 	'{}'::jsonb
 );
 insert into components (user_id, room_id, type, name, power, power_uom, metadata)
@@ -53,6 +116,7 @@ values (
 	'actuator',
 	'dehumidifier',
 	0.20,
+	'kW/s',
 	'{}'::jsonb
 );
 
@@ -64,6 +128,7 @@ values (
 	'actuator',
 	'heater',
 	0.05,
+	'kW/s',
 	'{}'::jsonb
 );
 insert into components (user_id, room_id, type, name, power, power_uom, metadata)
@@ -73,6 +138,7 @@ values (
 	'actuator',
 	'dehumidifier',
 	0.20,
+	'kW/s',
 	'{}'::jsonb
 );
 insert into components (user_id, room_id, type, name, power, power_uom, metadata)
@@ -82,6 +148,7 @@ values (
 	'actuator',
 	'heater',
 	0.05,
+	'kW/s',
 	'{}'::jsonb
 );
 insert into components (user_id, room_id, type, name, power, power_uom, metadata)
@@ -91,6 +158,7 @@ values (
 	'actuator',
 	'dehumidifier',
 	0.20,
+	'kW/s',
 	'{}'::jsonb
 );
 insert into components (user_id, room_id, type, name, power, power_uom, metadata)
@@ -100,6 +168,7 @@ values (
 	'actuator',
 	'heater',
 	0.05,
+	'kW/s',
 	'{}'::jsonb
 );
 insert into components (user_id, room_id, type, name, power, power_uom, metadata)
@@ -109,6 +178,7 @@ values (
 	'actuator',
 	'dehumidifier',
 	0.20,
+	'kW/s',
 	'{}'::jsonb
 );
 
@@ -120,6 +190,7 @@ values (
 	'actuator',
 	'heater',
 	0.05,
+	'kW/s',
 	'{}'::jsonb
 );
 insert into components (user_id, room_id, type, name, power, power_uom, metadata)
@@ -129,6 +200,7 @@ values (
 	'actuator',
 	'dehumidifier',
 	0.20,
+	'kW/s',
 	'{}'::jsonb
 );
 insert into components (user_id, room_id, type, name, power, power_uom, metadata)
@@ -138,6 +210,7 @@ values (
 	'actuator',
 	'heater',
 	0.05,
+	'kW/s',
 	'{}'::jsonb
 );
 insert into components (user_id, room_id, type, name, power, power_uom, metadata)
@@ -147,5 +220,6 @@ values (
 	'actuator',
 	'dehumidifier',
 	0.20,
+	'kW/s',
 	'{}'::jsonb
 );

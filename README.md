@@ -13,8 +13,6 @@ This repository is designed to serve both as:
 * an **academic project** eligible for the *Distributed Artificial Intelligence* exam, and
 * a **portfolio-grade, enterprise-style system** suitable for extension toward real-world IoT deployments.
 
----
-
 ## Table of Contents
 
 * [Project Goals](#project-goals)
@@ -32,8 +30,6 @@ This repository is designed to serve both as:
 * [Conclusion](#conclusion)
 * [Author](#author)
 
----
-
 ## Project Goals
 
 The main objectives of DAI Smart Room are:
@@ -45,8 +41,6 @@ The main objectives of DAI Smart Room are:
 * Provide **quantitative metrics** to evaluate system behavior
 
 The project intentionally balances **theoretical correctness** (DAI concepts) with **engineering realism** (modern tooling, messaging, observability).
-
----
 
 ## Why This Project Is Suitable for a DAI Exam
 
@@ -61,14 +55,10 @@ DAI Smart Room directly addresses the core topics of Distributed Artificial Inte
 
 Rather than focusing on a single AI algorithm, the system emphasizes **system-level intelligence emerging from agent interactions**, which is a central theme of DAI.
 
----
-
 ## System Overview
 
 The system simulates an **entire house composed of multiple rooms**, each managed by cooperating agents.
 While execution is local (exam constraint), the architecture is designed to preserve the **semantics of a distributed system**, enabling future scaling across rooms, buildings, or hosts.
-
----
 
 ## Agent-Based Architecture
 
@@ -94,8 +84,6 @@ Each agent is modeled as an independent software entity with:
 
 This separation ensures **loose coupling**, **clear responsibilities**, and **true distribution of intelligence**.
 
----
-
 ## Communication Model
 
 Agents communicate exclusively through a **publish/subscribe model** over an MQTT broker:
@@ -104,15 +92,11 @@ Agents communicate exclusively through a **publish/subscribe model** over an MQT
 * Decoupled in time and space
 * Event-driven
 
----
-
 ## Execution Model
 
 * Single-host execution (exam constraint)
 * Independent agents with no shared state
 * All coordination performed via message passing
-
----
 
 ## Observability & Evaluation
 
@@ -131,8 +115,6 @@ The system provides:
 
 These metrics enable **objective evaluation** of architectural and coordination choices during the exam.
 
----
-
 ## Technologies Used
 
 | Technology       | Purpose                         |
@@ -145,8 +127,6 @@ These metrics enable **objective evaluation** of architectural and coordination 
 
 All tools and libraries used are **open-source** and suitable for both academic and professional contexts.
 
----
-
 ## Extensibility
 
 The architecture is intentionally designed for extension:
@@ -157,16 +137,12 @@ The architecture is intentionally designed for extension:
 
 This makes the project suitable not only for the exam, but also for continued academic exploration or professional development.
 
----
-
 ## Documentation
 
 The repository includes:
 
 * This README (high-level overview)
 * Presentation slides for oral discussion
-
----
 
 ## Conclusion
 
@@ -178,8 +154,6 @@ It is a **complete distributed intelligence system**, designed to:
 * demonstrate core DAI principles
 * support quantitative evaluation
 * justify architectural and design decisions
-
----
 
 ## Author
 

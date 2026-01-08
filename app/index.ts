@@ -13,7 +13,6 @@ import { components, users, rooms } from "@/db/schema";
 import { RoomAgent, Orchestrator } from "@/agents";
 import { Sensor, Actuator } from "@/components";
 import type { SensorConfig, ComponentConfig } from "@/components";
-import "@/metrics";
 import { startMetricsServer } from "@/metrics/server";
 
 const logger = baseLogger.child({ name: basename(__filename) });

@@ -4,19 +4,20 @@
  */
 import { basename } from "path";
 import type { MqttClient } from "mqtt";
+
 import { logger, type Logger } from "@/libs/logger";
 import { Sensor, Actuator, type SensorMetadata } from "@/components";
+import { roomState, comfortViolation } from "@/metrics/room.metrics";
+import { actuatorCommandsTotal } from "@/metrics/actuator.metrics";
 
-import {
-	roomTemperature, roomHumidity, roomCO2, roomLuminosity,
-	roomTemperatureError, roomCO2Error, roomLuminosityError,
-	roomComfortViolation, roomEnergyWatts
-} from "@/metrics";
-
+type GrantPayload = {
+	value: boolean;
+	lease_ms?: number;
+}
 
 export class RoomAgent {
 	private readonly logger: Logger;
-	private actuatorsList: Record<string, boolean> = {};
+	private actuatorsState: Record<string, boolean> = {};
 
 	constructor(
 		private readonly roomId: string,
@@ -26,14 +27,19 @@ export class RoomAgent {
 	) {
 		this.logger = logger.child({ name: basename(__filename), id: roomId });
 
-		this.actuatorsList = actuators.reduce((acc, act) => {
-			return { ...acc, [act.config.name]: false };
-		}, {});
+		this.actuatorsState = Object.fromEntries(
+			actuators.map(a => [a.config.name, false])
+		);
 
 		const base = `room/${roomId}`;
 
+		const topics = [
+			`${base}/sensors/+`,
+			`${base}/actuators/+/ack`,
+			`${base}/actuators/+/grant`
+		]
 		this.mqtt.subscribe(
-			[`${base}/sensors/+`, `${base}/actuators/+/ack`],
+			topics,
 			(error, granted) => {
 				if (error) {
 					this.logger.error({ error }, "Errore subscribing to topics");
@@ -63,39 +69,35 @@ export class RoomAgent {
 	 * @returns {void}
 	 */
 	private onMessage(topic: string, payload: Buffer): void {
-		let value: number;
-
-		try {
-			value = Number(JSON.parse(payload.toString()).value);
-		} catch {
-			this.logger.warn({ topic }, "Invalid payload");
-			return;
-		}
-
 		const parts = topic.split("/");
 
-		/* -------- ACTUATOR ACK -------- */
-		if (parts.includes("actuators")) {
-			const actuator = parts.at(-2);
-			if (!actuator) {
-				this.logger.warn("No actuator definend in the topic");
-				return;
-			}
-			this.actuatorsList[actuator] = Boolean(value);
-			this.updateEnergyMetric();
+		if (topic.endsWith("/grant")) {
+			const actuator = parts.at(-2) || "";
+			const { value } = JSON.parse(payload.toString()) as GrantPayload;
+			this.applyGrant(actuator, value);
 			return;
 		}
 
-		/* -------- SENSOR -------- */
+		if (topic.endsWith("/ack")) {
+			const actuator = parts.at(-2);
+			const value = JSON.parse(payload.toString()) as { value: boolean }
+			this.actuatorsState[actuator] = value;
+			return;
+		}
+
 		const sensorName = parts.at(-1)!;
 		const sensor = this.sensors.find(s => s.config.name === sensorName);
 		if (!sensor) return;
 
-		this.logger.debug({ sensor: sensorName, value }, "sensor value");
+		const value = Number(JSON.parse(payload.toString()).value);
 		const meta = sensor.config.metadata as SensorMetadata;
 
-		this.updateMetrics(sensorName, value, meta);
-		this.evaluateAndAct(sensorName, value, meta);
+		roomState.set(
+			{ room_id: this.roomId, dimension: sensorName },
+			value
+		);
+
+		this.evaluateAndRequest(sensorName, value, meta);
 	}
 
 	/**
@@ -105,41 +107,34 @@ export class RoomAgent {
 	 * @param meta {SensorMetadata} metadata of the sensor from the database
 	 * @returns {void}
 	 */
-	private evaluateAndAct(sensorName: string, value: number, meta: SensorMetadata): void {
+	private evaluateAndRequest(sensorName: string, value: number, meta: SensorMetadata): void {
 		let desiredState: boolean | undefined;
 		const { initial_value, max_value, actuator } = meta;
+
 		switch (sensorName) {
-			case "temperature": {
+			case "temperature":
+			case "luminosity":
 				if (value <= initial_value) desiredState = true;
 				else if (value >= max_value) desiredState = false;
 				break;
-			}
-			case "luminosity": {
-				if (value <= initial_value) desiredState = true;
-				else if (value >= max_value) desiredState = false;
-				break;
-			}
-			case "co2": {
+
+			case "co2":
+			case "humidity":
 				if (value >= max_value) desiredState = true;
 				else if (value <= initial_value) desiredState = false;
 				break;
-			}
-			case "humidity": {
-				if (value >= max_value) desiredState = true;
-				else if (value <= initial_value) desiredState = false;
-				break;
-			}
+
 			default: { return; }
 		}
 
 		if (
 			desiredState === undefined ||
-			this.actuatorsList[actuator] === desiredState
+			this.actuatorsState[actuator] === desiredState
 		) {
 			return;
 		}
 
-		this.sendActuatorCommand(actuator, desiredState);
+		this.sendRequest(actuator, desiredState);
 
 		const temperatureViolation = (
 			sensorName === "temperature" &&
@@ -149,72 +144,35 @@ export class RoomAgent {
 		const luminosityViolation = sensorName === "luminosity" && value < initial_value;
 		const violation = temperatureViolation || co2Violation || luminosityViolation;
 
-		roomComfortViolation.set({ room_id: this.roomId }, violation ? 1 : 0);
+		comfortViolation.set({ room_id: this.roomId }, violation ? 1 : 0);
 	}
 
 	/**
-	 * Send the command to the actuator mqtt topic
+	 * Send the request to the orchestrator via mqtt
 	 * @param actuator {string} name of the actuator
-	 * @param state {boolean} value for the actuator
+	 * @param value {boolean} value for the actuator
 	 * @returns {void}
 	 */
-	private sendActuatorCommand(actuator: string, state: boolean): void {
+	private sendRequest(actuator: string, value: boolean): void {
+		const topic = `room/${this.roomId}/actuators/${actuator}/request`;
+		this.mqtt.publish(topic, JSON.stringify({ value }));
+		this.logger.info({ actuator, value }, "Actuator request sent");
+	}
+
+	/**
+	 * Send the command to apply the grant to the actuator
+	 * @param actuator {string} Actuator name
+	 * @param value {boolean} Command value
+	 * @returns {void}
+	 */
+	private applyGrant(actuator: string, value: boolean): void {
 		const topic = `room/${this.roomId}/actuators/${actuator}`;
-		this.logger.info(`Room publish to ${topic}`)
-		this.mqtt.publish(topic, JSON.stringify({ value: state }));
-		this.actuatorsList[actuator] = state;
-		this.updateEnergyMetric();
+		this.mqtt.publish(topic, JSON.stringify({ value }));
+		this.logger.info({ actuator, value }, "Grant applied");
 
-		this.logger.info({ actuator, state }, "Actuator command sent");
-	}
-
-	/**
-	 * Update energy metrics
-	 * @returns {void}
-	 */
-	private updateEnergyMetric(): void {
-		const watts = this.actuators
-			.filter(act => act.getState())
-			.reduce((acc, act) => {
-				return acc + Number(act.config.power);
-			}, 0);
-
-		roomEnergyWatts.set({ room_id: this.roomId }, watts);
-	}
-
-	/**
-	 * Update sensor metrics
-	 * @param sensorName {string} name of the sensor
-	 * @param value {number} sensor's value
-	 * @param meta {SensorMetadata} sensor metadata from database
-	 * @returns {void}
-	 */
-	private updateMetrics(sensorName: string, value: number, meta: SensorMetadata): void {
-		switch (sensorName) {
-			case "temperature":
-				roomTemperature.set({ room_id: this.roomId }, value);
-				roomTemperatureError.set(
-					{ room_id: this.roomId },
-					value - meta.initial_value
-				);
-				break;
-
-			case "humidity":
-				roomHumidity.set({ room_id: this.roomId }, value);
-				break;
-
-			case "co2":
-				roomCO2.set({ room_id: this.roomId }, value);
-				roomCO2Error.set(
-					{ room_id: this.roomId },
-					value - meta.initial_value
-				);
-				break;
-
-			case "luminosity":
-				roomLuminosity.set({ room_id: this.roomId }, value);
-				roomLuminosityError.set({ room_id: this.roomId }, value - meta.initial_value);
-				break;
-		}
+		actuatorCommandsTotal.inc({
+			room_id: this.roomId,
+			actuator: actuator
+		})
 	}
 }

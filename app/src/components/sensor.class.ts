@@ -6,6 +6,7 @@ import { basename } from "path";
 import type { MqttClient } from "mqtt";
 
 import { logger, type Logger } from "@/libs/logger";
+import { sensorReadings, sensorUpdateLatencyMs } from "@/metrics/sensor.metrics"
 
 export interface SensorMetadata {
 	name: "temperature" | "humidity" | "co2" | "luminosity";
@@ -74,6 +75,7 @@ export class Sensor {
 	}
 
 	private updateValue() {
+		const start = Date.now();
 		const conf = this.config;
 		let delta = 0;
 
@@ -97,5 +99,14 @@ export class Sensor {
 
 		this.value += delta;
 		this.value = Math.max(0, Math.min(conf.metadata.max_value, this.value));
+
+		sensorReadings.set(
+			{ room_id: this.config.room_id, sensor_type: this.config.name },
+			this.value
+		);
+		sensorUpdateLatencyMs.observe(
+			{ room_id: this.config.room_id, sensor_type: this.config.name },
+			Date.now() - start
+		);
 	}
 }

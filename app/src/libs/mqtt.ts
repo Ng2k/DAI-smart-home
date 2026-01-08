@@ -43,13 +43,12 @@ export class Mqtt {
 	* @brief Create a new client to the mqtt server
 	* @returns {MqttClient} Client mqtt
 	*/
-	public async createClient(componentId: string): Promise<MqttClient> {
+	public async createClient(): Promise<MqttClient> {
 		try {
 			const client = await mqtt.connectAsync(
 				this.url,
 				{ username: this.username, password: this.password }
 			);
-			this.logger.info({ component_id: componentId }, "Create new mqtt client");
 			return client;
 		} catch (error) {
 			this.logger.error({ error }, "Error connecting to the mqtt broker")

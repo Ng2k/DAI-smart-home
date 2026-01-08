@@ -3,10 +3,11 @@
  * @file index.ts
  * @author Nicola Guerra
  */
+import { basename } from "path";
 import { eq } from "drizzle-orm";
 import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
 
-import { logger } from "@/libs/logger";
+import { logger as baseLogger } from "@/libs/logger";
 import { Mqtt } from "@/libs/mqtt";
 import { components, users, rooms } from "@/db/schema";
 import { RoomAgent, Orchestrator } from "@/agents";
@@ -14,6 +15,8 @@ import { Sensor, Actuator } from "@/components";
 import type { SensorConfig, ComponentConfig } from "@/components";
 import "@/metrics";
 import { startMetricsServer } from "@/metrics/server";
+
+const logger = baseLogger.child({ name: basename(__filename) });
 
 const getAllRooms = async (
 	db: NodePgDatabase,
@@ -54,24 +57,34 @@ const instantiateRooms = async (
 		rooms.map(async room => {
 			const sensors = await Promise.all(
 				room.sensors.map(async sensor => {
-					const client = await mqtt.createClient(sensor.id);
+					const client = await mqtt.createClient();
+					logger.info(
+						{ room: room.id },
+						`create mqtt client for sensor ${sensor.name}`
+					);
 					return new Sensor(sensor, client);
 				})
 			);
 
 			const actuators = await Promise.all(
 				room.actuators.map(async actuator => {
-					const client = await mqtt.createClient(actuator.id);
+					const client = await mqtt.createClient();
+					logger.info(
+						{ room: room.id },
+						`create mqtt client for actuator ${actuator.name}`
+					);
 					return new Actuator(actuator, client);
 				})
 			);
 
-			const roomClient = await mqtt.createClient(room.id);
+			const roomClient = await mqtt.createClient();
 
-			logger.info(
-				{ room: room.id, sensors: sensors.length, actuators: actuators.length },
-				"Room instantiated"
-			);
+			const logOpts = {
+				room: room.id,
+				n_sensors: sensors.length,
+				n_actuators: actuators.length
+			}
+			logger.info(logOpts, "Room instantiated");
 
 			return new RoomAgent(
 				room.id,
@@ -106,8 +119,8 @@ const main = async () => {
 	const roomConfigs = await getAllRooms(db, user.id);
 	const roomAgents = await instantiateRooms(roomConfigs);
 
-	const orchestratorClient = await Mqtt.getInstance().createClient("orchestrator");
-	const orchestrator = new Orchestrator(user.id, orchestratorClient);
+	const orchestratorClient = await Mqtt.getInstance().createClient();
+	const orchestrator = new Orchestrator(orchestratorClient);
 
 	startMetricsServer();
 

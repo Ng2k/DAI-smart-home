@@ -1,3 +1,7 @@
+/**
+ * @file room.class.ts
+ * @author Nicola Guerra
+ */
 import { basename } from "path";
 import type { MqttClient } from "mqtt";
 import { logger, type Logger } from "@/libs/logger";
@@ -58,7 +62,13 @@ export class RoomAgent {
 
 	// private methods -----------------------------------------------------------------------------
 
-	private onMessage(topic: string, payload: Buffer) {
+	/**
+	 * Handles message from the subscribed topics
+	 * @param topic {string} mqtt topic
+	 * @param payload {Buffer} body of the mqtt message
+	 * @returns {void}
+	 */
+	private onMessage(topic: string, payload: Buffer): void {
 		let value: number;
 
 		try {
@@ -94,11 +104,14 @@ export class RoomAgent {
 		this.evaluateAndAct(sensorName, value, meta);
 	}
 
-	private evaluateAndAct(
-		sensorName: string,
-		value: number,
-		meta: SensorMetadata
-	) {
+	/**
+	 * Evaluate sensor values
+	 * @param sensorName {string} name of the sensor
+	 * @param value {number} value of the mqtt message
+	 * @param meta {SensorMetadata} metadata of the sensor from the database
+	 * @returns {void}
+	 */
+	private evaluateAndAct(sensorName: string, value: number, meta: SensorMetadata): void {
 		let desiredState: boolean | undefined;
 		const { initial_value, max_value, actuator } = meta;
 		switch (sensorName) {
@@ -145,7 +158,13 @@ export class RoomAgent {
 		roomComfortViolation.set({ room_id: this.roomId }, violation ? 1 : 0);
 	}
 
-	private sendActuatorCommand(actuator: string, state: boolean) {
+	/**
+	 * Send the command to the actuator mqtt topic
+	 * @param actuator {string} name of the actuator
+	 * @param state {boolean} value for the actuator
+	 * @returns {void}
+	 */
+	private sendActuatorCommand(actuator: string, state: boolean): void {
 		const topic = `room/${this.roomId}/actuators/${actuator}`;
 		this.logger.info(`Room publish to ${topic}`)
 		this.mqtt.publish(topic, JSON.stringify({ value: state }));
@@ -155,7 +174,11 @@ export class RoomAgent {
 		this.logger.info({ actuator, state }, "Actuator command sent");
 	}
 
-	private updateEnergyMetric() {
+	/**
+	 * Update energy metrics
+	 * @returns {void}
+	 */
+	private updateEnergyMetric(): void {
 		const watts = Object.entries(this.actuators)
 			.filter(([, on]) => on)
 			.reduce((sum, [a]) => sum + (ACTUATOR_POWER[a] ?? 0), 0);
@@ -163,11 +186,14 @@ export class RoomAgent {
 		roomEnergyWatts.set({ room_id: this.roomId }, watts);
 	}
 
-	private updateMetrics(
-		sensorName: string,
-		value: number,
-		meta: SensorMetadata
-	) {
+	/**
+	 * Update sensor metrics
+	 * @param sensorName {string} name of the sensor
+	 * @param value {number} sensor's value
+	 * @param meta {SensorMetadata} sensor metadata from database
+	 * @returns {void}
+	 */
+	private updateMetrics(sensorName: string, value: number, meta: SensorMetadata): void {
 		switch (sensorName) {
 			case "temperature":
 				roomTemperature.set({ room_id: this.roomId }, value);

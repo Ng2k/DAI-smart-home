@@ -1,5 +1,6 @@
 /**
  * @file actuator.class.ts
+ * @author Nicola Guerra
  */
 import path from "path";
 import type { MqttClient } from "mqtt";
@@ -38,9 +39,19 @@ export class Actuator extends Component {
 					{ room_id: config.room_id, actuator: config.name },
 					this.state ? 1 : 0
 				);
-			} catch { }
+			} catch (error) {
+				this.logger.error({ error }, "Error publishing value")
+			}
 		});
 
 		this.logger.info("Actuator initialized");
 	}
+
+	// public methods ------------------------------------------------------------------------------
+
+	/**
+	 * Returns the state of the actuator
+	 * @returns {boolean}
+	 */
+	public getState(): boolean { return this.state; }
 }

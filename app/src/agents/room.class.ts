@@ -13,12 +13,6 @@ import {
 	roomComfortViolation, roomEnergyWatts
 } from "@/metrics";
 
-const ACTUATOR_POWER: Record<string, number> = {
-	heater: 1500,
-	dehumidifier: 300,
-	ventilation: 400,
-	light: 200
-};
 
 export class RoomAgent {
 	private readonly logger: Logger;
@@ -179,9 +173,11 @@ export class RoomAgent {
 	 * @returns {void}
 	 */
 	private updateEnergyMetric(): void {
-		const watts = Object.entries(this.actuators)
-			.filter(([, on]) => on)
-			.reduce((sum, [a]) => sum + (ACTUATOR_POWER[a] ?? 0), 0);
+		const watts = this.actuators
+			.filter(act => act.getState())
+			.reduce((acc, act) => {
+				return acc + Number(act.config.power);
+			}, 0);
 
 		roomEnergyWatts.set({ room_id: this.roomId }, watts);
 	}

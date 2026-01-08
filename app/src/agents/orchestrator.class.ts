@@ -35,6 +35,7 @@ export class Orchestrator {
 	}
 
 	// private methods -----------------------------------------------------------------------------
+
 	/**
 	 * Update the count of the total actuators ON
 	 * @param topic {string} mqtt topic

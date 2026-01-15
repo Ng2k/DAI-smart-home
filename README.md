@@ -47,18 +47,16 @@ The project intentionally balances **theoretical correctness** (DAI concepts) wi
 DAI Smart Room directly addresses the core topics of Distributed Artificial Intelligence:
 
 * **Multiple autonomous agents** with clearly defined responsibilities
-* **Decentralized control** supported by coordination mechanisms
 * **Asynchronous communication** via message passing
 * **Partial knowledge** and local perception at agent level
 * **Scalability and fault tolerance** considerations
-* **Learning and adaptation** (designed as optional and extensible components)
 
 Rather than focusing on a single AI algorithm, the system emphasizes **system-level intelligence emerging from agent interactions**, which is a central theme of DAI.
 
 ## System Overview
 
 The system simulates an **entire house composed of multiple rooms**, each managed by cooperating agents.
-While execution is local (exam constraint), the architecture is designed to preserve the **semantics of a distributed system**, enabling future scaling across rooms, buildings, or hosts.
+While execution is local, the architecture is designed to preserve the **semantics of a distributed system**, enabling future scaling across rooms, buildings, or hosts.
 
 ## Agent-Based Architecture
 
@@ -69,12 +67,6 @@ Each agent is modeled as an independent software entity with:
 * no shared memory with other agents
 
 ### Core Agents
-
-* **Sensor Agent**
-  Simulates environmental sensors (temperature, humidity, CO₂, light) and periodically publishes observations.
-
-* **Actuator Agent**
-  Represents controllable devices (heater, AC, lights, ventilation) and executes actions received via commands.
 
 * **Room Agent**
   Manages local comfort within a room by processing sensor data and controlling actuators, while respecting global policies.
@@ -94,7 +86,7 @@ Agents communicate exclusively through a **publish/subscribe model** over an MQT
 
 ## Execution Model
 
-* Single-host execution (exam constraint)
+* Single-host execution
 * Independent agents with no shared state
 * All coordination performed via message passing
 
